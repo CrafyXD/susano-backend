@@ -1,19 +1,8 @@
---[[
-    Susano V1.0 - Full Edition
-    GitHub Private Repo Key System + GitHub Gist Config
-    Luarmor ile şifrelenecek bu dosya
-    
-    KURULUM:
-    1. GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, GIST_TOKEN değerlerini doldur
-    2. Bu dosyayı luarmor.net'e yükle, obfuscate et
-    3. Çıkan dosyayı susano_obfuscated.lua olarak GitHub'a koy
-    4. loader.lua'yı GitHub'a koy
-    5. Kullanıcıya loadstring URL'sini ver
-]]
+-- Xeno + tüm executor uyumluluk
+if not getgenv then getgenv = function() return _G end end
+if not getrenv then getrenv = function() return _G end end
+if not getsenv then getsenv = function() return _G end end
 
--- ╔══════════════════════════════════════════╗
--- ║         ADMIN AYARLARI — BURAYA BAK      ║
--- ╚══════════════════════════════════════════╝
 local t1 = "ghp_wG4l"
 local t2 = "OHjlmUvwum"
 local t3 = "ObSMZlppNaGyMq3H3JtpiC"
@@ -31,9 +20,6 @@ local CFG = {
         lifetime = 0,
     },
 }
--- ╔══════════════════════════════════════════╗
--- ║           ADMIN AYARLARI SONU            ║
--- ╚══════════════════════════════════════════╝
 
 -- ========== SERVICES ==========
 local Players          = game:GetService("Players")
@@ -57,32 +43,28 @@ end
 
 -- ========== HWID ==========
 local function getHWID()
-    -- Birden fazla yöntem dene, en güveniliri kullan
     local methods = {
         function() return tostring(game:GetService("RbxAnalyticsService"):GetClientId()) end,
         function() return tostring(LocalPlayer.UserId) .. "_" .. tostring(game.PlaceId) end,
     }
     for _, fn in ipairs(methods) do
         local ok, result = pcall(fn)
-        if ok and result and result ~= "" and result ~= "0" then
-            return result
-        end
+        if ok and result and result ~= "" and result ~= "0" then return result end
     end
     return tostring(LocalPlayer.UserId)
 end
 
-local HWID        = getHWID()
-local USERNAME    = LocalPlayer.Name
-local USER_ID     = tostring(LocalPlayer.UserId)
+local HWID     = getHWID()
+local USERNAME = LocalPlayer.Name
+local USER_ID  = tostring(LocalPlayer.UserId)
 
 -- ========== FILE HELPERS ==========
-local KEY_FILE    = "susano_key.txt"
-local function safeRead(path)    if readfile  then return pcall(readfile, path)       end; return false, nil end
-local function safeWrite(path,d) if writefile then pcall(writefile, path, d)          end end
-local function safeDel(path)     if delfile   then pcall(delfile, path)               end end
+local KEY_FILE = "susano_key.txt"
+local function safeRead(path)    if readfile  then return pcall(readfile, path)  end; return false, nil end
+local function safeWrite(path,d) if writefile then pcall(writefile, path, d)     end end
+local function safeDel(path)     if delfile   then pcall(delfile, path)          end end
 
--- ========== GITHUB API HELPERS ==========
--- GitHub Raw dosyası oku (private repo için token gerekli)
+-- ========== GITHUB API ==========
 local function githubRead(path)
     local url = string.format(
         "https://raw.githubusercontent.com/%s/%s/%s/%s",
@@ -90,8 +72,8 @@ local function githubRead(path)
     )
     local ok, resp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = url,
-            Method  = "GET",
+            Url    = url,
+            Method = "GET",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GITHUB_TOKEN,
                 ["Accept"]        = "application/vnd.github.v3.raw",
@@ -102,17 +84,15 @@ local function githubRead(path)
     return true, resp.Body
 end
 
--- GitHub dosyasını güncelle (PUT)
 local function githubWrite(path, content, message)
-    -- Önce dosyanın mevcut SHA'sını al
     local shaUrl = string.format(
         "https://api.github.com/repos/%s/%s/contents/%s",
         CFG.GITHUB_OWNER, CFG.GITHUB_REPO, path
     )
     local shaOk, shaResp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = shaUrl,
-            Method  = "GET",
+            Url    = shaUrl,
+            Method = "GET",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GITHUB_TOKEN,
                 ["Accept"]        = "application/vnd.github.v3+json",
@@ -120,15 +100,11 @@ local function githubWrite(path, content, message)
             },
         })
     end)
-
     local currentSHA = ""
     if shaOk and shaResp.Success then
         local ok2, data = pcall(function() return HttpService:JSONDecode(shaResp.Body) end)
         if ok2 and data and data.sha then currentSHA = data.sha end
     end
-
-    -- Base64 encode content
-    -- Roblox'ta native base64 yok, kendimiz yaparız
     local b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     local function b64encode(data)
         local result = {}
@@ -145,18 +121,16 @@ local function githubWrite(path, content, message)
         local res = table.concat(result)
         return res:sub(1, #res-padding) .. string.rep("=", padding)
     end
-
     local body = HttpService:JSONEncode({
         message = message or "update",
         content = b64encode(content),
         sha     = currentSHA ~= "" and currentSHA or nil,
         branch  = CFG.GITHUB_BRANCH,
     })
-
     local ok, resp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = shaUrl,
-            Method  = "PUT",
+            Url    = shaUrl,
+            Method = "PUT",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GITHUB_TOKEN,
                 ["Accept"]        = "application/vnd.github.v3+json",
@@ -169,19 +143,17 @@ local function githubWrite(path, content, message)
     return ok and resp and resp.Success
 end
 
--- ========== GIST API (CONFIG) ==========
+-- ========== GIST API ==========
 local function gistCreate(name, content)
     local body = HttpService:JSONEncode({
         description = "Susano Config: " .. name,
-        public      = false,  -- secret gist, sadece ID bilen görebilir
-        files       = {
-            [name .. ".json"] = { content = content }
-        }
+        public      = false,
+        files       = { [name .. ".json"] = { content = content } }
     })
     local ok, resp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = "https://api.github.com/gists",
-            Method  = "POST",
+            Url    = "https://api.github.com/gists",
+            Method = "POST",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GIST_TOKEN,
                 ["Accept"]        = "application/vnd.github.v3+json",
@@ -194,14 +166,14 @@ local function gistCreate(name, content)
     if not ok or not resp.Success then return false, nil end
     local ok2, data = pcall(function() return HttpService:JSONDecode(resp.Body) end)
     if not ok2 or not data or not data.id then return false, nil end
-    return true, data.id  -- Gist ID = config kodu
+    return true, data.id
 end
 
 local function gistRead(gistId)
     local ok, resp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = "https://api.github.com/gists/" .. gistId,
-            Method  = "GET",
+            Url    = "https://api.github.com/gists/" .. gistId,
+            Method = "GET",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GIST_TOKEN,
                 ["Accept"]        = "application/vnd.github.v3+json",
@@ -212,7 +184,6 @@ local function gistRead(gistId)
     if not ok or not resp.Success then return false, nil end
     local ok2, data = pcall(function() return HttpService:JSONDecode(resp.Body) end)
     if not ok2 or not data or not data.files then return false, nil end
-    -- İlk dosyanın içeriğini al
     for _, file in pairs(data.files) do
         if file.content then
             local ok3, cfg = pcall(function() return HttpService:JSONDecode(file.content) end)
@@ -225,8 +196,8 @@ end
 local function gistDelete(gistId)
     local ok, resp = pcall(function()
         return HttpService:RequestAsync({
-            Url     = "https://api.github.com/gists/" .. gistId,
-            Method  = "DELETE",
+            Url    = "https://api.github.com/gists/" .. gistId,
+            Method = "DELETE",
             Headers = {
                 ["Authorization"] = "token " .. CFG.GIST_TOKEN,
                 ["User-Agent"]    = "Susano-Script",
@@ -252,50 +223,26 @@ end
 local function saveKeys(keysData)
     local ok, json = pcall(function() return HttpService:JSONEncode(keysData) end)
     if not ok then return false end
-    return githubWrite("keys.json", json, "key update: hwid bind")
+    return githubWrite("keys.json", json, "hwid bind")
 end
 
--- Key doğrulama + HWID kilitleme
 local function validateKey(key, callback)
     key = key:upper():gsub("%s+", "")
     if key == "" then callback(false, "Anahtar gir"); return end
-
     task.spawn(function()
         local keysData = loadKeys()
-        if not keysData then
-            callback(false, "Sunucuya bağlanılamadı")
-            return
-        end
-
+        if not keysData then callback(false, "Sunucuya bağlanılamadı"); return end
         local keyData = keysData[key]
-        if not keyData then
-            callback(false, "Geçersiz anahtar")
-            return
-        end
-
-        -- Süre kontrolü (expires 0 ise sonsuz)
+        if not keyData then callback(false, "Geçersiz anahtar"); return end
         if keyData.expires and keyData.expires > 0 then
-            if os.time() > keyData.expires then
-                callback(false, "Anahtarın süresi dolmuş")
-                return
-            end
+            if os.time() > keyData.expires then callback(false, "Anahtarın süresi dolmuş"); return end
         end
-
-        -- HWID kontrolü
         if keyData.hwid and keyData.hwid ~= "" and keyData.hwid ~= "null" then
-            -- Bu key daha önce bir HWID'e bağlanmış
-            if keyData.hwid ~= HWID then
-                callback(false, "Bu anahtar başka bir cihaza bağlı")
-                return
-            end
+            if keyData.hwid ~= HWID then callback(false, "Bu anahtar başka bir cihaza bağlı"); return end
         else
-            -- İlk kullanım — HWID'i kaydet (GitHub'a yaz)
             keysData[key].hwid = HWID
-            task.spawn(function()
-                saveKeys(keysData)
-            end)
+            task.spawn(function() saveKeys(keysData) end)
         end
-
         callback(true, keyData.type or "lifetime")
     end)
 end
@@ -307,10 +254,8 @@ local function loadSavedKey()
 end
 
 -- ========== GLOBALS ==========
-_G = getgenv and getgenv() or {}
+-- Xeno uyumlu: _G'yi override etmiyoruz, direkt kullanıyoruz
 _G.Verified = false
-
--- ESP
 _G.ESP=false;_G.ESPBox3D=false;_G.ESPBox2D=false
 _G.ShowNames=false;_G.ShowDistance=false;_G.ShowHealthBar=false
 _G.ShowID=false;_G.ShowTracer=false;_G.TracerThick=1.5
@@ -318,24 +263,19 @@ _G.TeamCheck=false;_G.ShowFriendly=false;_G.WallCheck=false;_G.SkeletonESP=false
 _G.ESPEnemyR=255;_G.ESPEnemyG=60;_G.ESPEnemyB=60
 _G.ESPFriendR=80;_G.ESPFriendG=140;_G.ESPFriendB=255
 _G.ESPVisR=80;_G.ESPVisG=255;_G.ESPVisB=120
--- Crosshair
 _G.Crosshair=false;_G.CrosshairStyle="Cross";_G.CrosshairSize=12
 _G.CrosshairThick=2;_G.CrosshairGap=4;_G.CrosshairAlpha=1.0
 _G.CrosshairDot=false;_G.CrosshairOutline=false
 _G.CrosshairR=255;_G.CrosshairG=255;_G.CrosshairB=255
--- Aimbot
 _G.Aimbot=false;_G.RageAimbot=false;_G.SilentAim=false;_G.AutoShoot=false
 _G.UseFOV=true;_G.FOVVisible=true;_G.FOVSize=120;_G.AimbotSmoothness=0.3
 _G.AimbotPartHead=true;_G.AimbotPartChest=false;_G.AimbotPartStomach=false
--- Movement
 _G.FlyEnabled=false;_G.FlySpeed=50;_G.NoClipEnabled=false
 _G.BunnyHop=false;_G.BunnyHopSpeed=1.2;_G.BunnyHopHeight=7
 _G.SpeedHack=false;_G.SpeedMultiplier=2.0
 _G.InfiniteJump=false;_G.LongJump=false;_G.LongJumpPower=80;_G.SwimHack=false
--- Players
 _G.KillAura=false;_G.KillAuraRange=15;_G.AntiAFK=false
 _G.NameSpoof=false;_G.SpoofedName="";_G.StreamProof=false
--- Visual
 _G.FullBright=false;_G.NoFog=false
 _G.FOVChanger=false;_G.FOVChangerVal=200
 _G.ThirdPerson=false;_G.ThirdPersonDist=12
@@ -378,11 +318,10 @@ local function makeGui(name, order)
     return g
 end
 
--- ========== KEY MENU (ANINDA AÇILIR) ==========
+-- ========== KEY MENU ==========
 local keyMenuGui = makeGui("SusanoKeyMenu", 999)
 
 local function buildKeyMenu(onSuccess)
-    -- Arka plan
     local overlay=Instance.new("Frame",keyMenuGui)
     overlay.Size=UDim2.new(1,0,1,0);overlay.BackgroundColor3=Color3.fromRGB(5,5,5)
     overlay.BackgroundTransparency=0;overlay.BorderSizePixel=0
@@ -391,24 +330,20 @@ local function buildKeyMenu(onSuccess)
         l.Position=UDim2.new(0,0,0,i*36);l.BackgroundColor3=Color3.new(1,1,1)
         l.BackgroundTransparency=0.97;l.BorderSizePixel=0
     end
-
-    -- Kart
     local card=Instance.new("Frame",keyMenuGui)
     card.Size=UDim2.new(0,460,0,500);card.Position=UDim2.new(0.5,-230,0.5,-250)
     card.BackgroundColor3=T.BG;card.BorderSizePixel=0;corner(12,card)
     local cs=Instance.new("UIStroke",card);cs.Color=T.BorderLight;cs.Thickness=1;cs.Transparency=0.5
-    -- Gölge
     for _,sd in ipairs({{4,3,0.82},{12,6,0.88},{22,10,0.94}}) do
         local s=Instance.new("Frame",card);s.Size=UDim2.new(1,sd[1],1,sd[1])
         s.Position=UDim2.new(0,-sd[1]/2,0,sd[2]);s.BackgroundColor3=Color3.new(0,0,0)
         s.BackgroundTransparency=sd[3];s.ZIndex=card.ZIndex-1;s.BorderSizePixel=0;corner(15,s)
     end
-
-    -- Üst bar
     local topBar=Instance.new("Frame",card);topBar.Size=UDim2.new(1,0,0,52)
     topBar.BackgroundColor3=T.TitleBar;topBar.BorderSizePixel=0;topBar.ClipsDescendants=true
+    corner(12,topBar)
     local tbF=Instance.new("Frame",topBar);tbF.Size=UDim2.new(1,0,0.5,0)
-    tbF.Position=UDim2.new(0,0,0.5,0);tbF.BackgroundColor3=T.TitleBar;tbF.BorderSizePixel=0;corner(12,topBar)
+    tbF.Position=UDim2.new(0,0,0.5,0);tbF.BackgroundColor3=T.TitleBar;tbF.BorderSizePixel=0
     local tL=Instance.new("TextLabel",topBar);tL.Size=UDim2.new(1,0,0.65,0)
     tL.BackgroundTransparency=1;tL.Text="SUSANO";tL.TextColor3=T.Accent
     tL.Font=Enum.Font.GothamBlack;tL.TextSize=24
@@ -416,8 +351,6 @@ local function buildKeyMenu(onSuccess)
     sL.Position=UDim2.new(0,0,0.62,0);sL.BackgroundTransparency=1
     sL.Text="v1.0  —  Anahtarını gir";sL.TextColor3=T.TextFaint
     sL.Font=Enum.Font.GothamMedium;sL.TextSize=11
-
-    -- Profil
     local profBg=Instance.new("Frame",card);profBg.Size=UDim2.new(1,-32,0,70)
     profBg.Position=UDim2.new(0,16,0,60);profBg.BackgroundColor3=T.Card;corner(10,profBg)
     local avF=Instance.new("Frame",profBg);avF.Size=UDim2.new(0,48,0,48)
@@ -429,21 +362,23 @@ local function buildKeyMenu(onSuccess)
     end)
     local info=Instance.new("Frame",profBg);info.Size=UDim2.new(1,-68,1,0)
     info.Position=UDim2.new(0,64,0,0);info.BackgroundTransparency=1
-    local function iLbl(y,t,c,s) local l=Instance.new("TextLabel",info);l.Size=UDim2.new(1,0,0,18);l.Position=UDim2.new(0,0,0,y);l.BackgroundTransparency=1;l.Text=t;l.TextColor3=c;l.Font=Enum.Font.GothamMedium;l.TextSize=s;l.TextXAlignment=Enum.TextXAlignment.Left;return l end
-    iLbl(8,  "@"..USERNAME,                             T.Text,    15)
-    iLbl(28, "HWID: "..HWID:sub(1,22).."…",             T.TextFaint,11)
-    iLbl(44, "UID: "..USER_ID.."  |  Place: "..tostring(game.PlaceId), T.TextFaint,10)
-
-    -- Key tipi rozetleri
+    local function iLbl(y,t,c,s)
+        local l=Instance.new("TextLabel",info);l.Size=UDim2.new(1,0,0,18)
+        l.Position=UDim2.new(0,0,0,y);l.BackgroundTransparency=1;l.Text=t
+        l.TextColor3=c;l.Font=Enum.Font.GothamMedium;l.TextSize=s
+        l.TextXAlignment=Enum.TextXAlignment.Left;return l
+    end
+    iLbl(8, "@"..USERNAME, T.Text, 15)
+    iLbl(28,"HWID: "..HWID:sub(1,22).."…", T.TextFaint, 11)
+    iLbl(44,"UID: "..USER_ID.."  |  Place: "..tostring(game.PlaceId), T.TextFaint, 10)
     local badgeRow=Instance.new("Frame",card);badgeRow.Size=UDim2.new(1,-32,0,28)
     badgeRow.Position=UDim2.new(0,16,0,140);badgeRow.BackgroundTransparency=1
-    local bLayout=Instance.new("UIListLayout",badgeRow);bLayout.FillDirection=Enum.FillDirection.Horizontal
+    local bLayout=Instance.new("UIListLayout",badgeRow)
+    bLayout.FillDirection=Enum.FillDirection.Horizontal
     bLayout.Padding=UDim.new(0,6);bLayout.VerticalAlignment=Enum.VerticalAlignment.Center
     for _,bd in ipairs({
-        {l="GÜNLÜK",   c=T.TextDim},
-        {l="HAFTALIK", c=Color3.fromRGB(80,180,255)},
-        {l="AYLIK",    c=Color3.fromRGB(180,120,255)},
-        {l="SINIRSIZ", c=T.KeyGold},
+        {l="GÜNLÜK",c=T.TextDim},{l="HAFTALIK",c=Color3.fromRGB(80,180,255)},
+        {l="AYLIK",c=Color3.fromRGB(180,120,255)},{l="SINIRSIZ",c=T.KeyGold},
     }) do
         local b=Instance.new("Frame",badgeRow);b.Size=UDim2.new(0,82,1,0)
         b.BackgroundColor3=T.Card;corner(5,b)
@@ -451,14 +386,11 @@ local function buildKeyMenu(onSuccess)
         bl.BackgroundTransparency=1;bl.Text=bd.l;bl.TextColor3=bd.c
         bl.Font=Enum.Font.GothamBold;bl.TextSize=10
     end
-
-    -- Input label
     local inputLbl=Instance.new("TextLabel",card);inputLbl.Size=UDim2.new(1,-32,0,18)
     inputLbl.Position=UDim2.new(0,16,0,180);inputLbl.BackgroundTransparency=1
     inputLbl.Text="ANAHTAR";inputLbl.TextColor3=T.TextFaint
-    inputLbl.Font=Enum.Font.GothamBold;inputLbl.TextSize=10;inputLbl.TextXAlignment=Enum.TextXAlignment.Left
-
-    -- Input kutusu
+    inputLbl.Font=Enum.Font.GothamBold;inputLbl.TextSize=10
+    inputLbl.TextXAlignment=Enum.TextXAlignment.Left
     local inputBox=Instance.new("TextBox",card)
     inputBox.Size=UDim2.new(1,-32,0,46);inputBox.Position=UDim2.new(0,16,0,200)
     inputBox.BackgroundColor3=T.Card;inputBox.TextColor3=T.Text
@@ -467,14 +399,10 @@ local function buildKeyMenu(onSuccess)
     inputBox.Text="";inputBox.ClearTextOnFocus=false;inputBox.BorderSizePixel=0
     corner(8,inputBox);pad(inputBox,14,0)
     local ibStroke=Instance.new("UIStroke",inputBox);ibStroke.Color=T.BorderLight;ibStroke.Thickness=1
-
-    -- Durum yazısı
     local statusLbl=Instance.new("TextLabel",card);statusLbl.Size=UDim2.new(1,-32,0,20)
     statusLbl.Position=UDim2.new(0,16,0,252);statusLbl.BackgroundTransparency=1
     statusLbl.Text="";statusLbl.Font=Enum.Font.GothamMedium;statusLbl.TextSize=13
     statusLbl.TextXAlignment=Enum.TextXAlignment.Left
-
-    -- Hatırla toggle
     local remRow=Instance.new("Frame",card);remRow.Size=UDim2.new(1,-32,0,28)
     remRow.Position=UDim2.new(0,16,0,278);remRow.BackgroundTransparency=1
     local remLbl=Instance.new("TextLabel",remRow);remLbl.Size=UDim2.new(0.78,0,1,0)
@@ -491,13 +419,8 @@ local function buildKeyMenu(onSuccess)
     remBtn.MouseButton1Click:Connect(function()
         remOn=not remOn
         tw(remPill,0.18,{BackgroundColor3=remOn and T.OnBG or T.OffBG})
-        tw(remKnob,0.18,{
-            Position=UDim2.new(remOn and 1 or 0,remOn and -19 or 3,0.5,-8),
-            BackgroundColor3=remOn and T.TitleBar or T.AccentDim
-        })
+        tw(remKnob,0.18,{Position=UDim2.new(remOn and 1 or 0,remOn and -19 or 3,0.5,-8),BackgroundColor3=remOn and T.TitleBar or T.AccentDim})
     end)
-
-    -- Giriş butonu
     local activateBtn=Instance.new("TextButton",card)
     activateBtn.Size=UDim2.new(1,-32,0,46);activateBtn.Position=UDim2.new(0,16,0,314)
     activateBtn.BackgroundColor3=T.Accent;activateBtn.TextColor3=T.BG
@@ -505,33 +428,23 @@ local function buildKeyMenu(onSuccess)
     corner(8,activateBtn)
     activateBtn.MouseEnter:Connect(function() tw(activateBtn,0.1,{BackgroundColor3=Color3.fromRGB(215,215,215)}) end)
     activateBtn.MouseLeave:Connect(function() tw(activateBtn,0.1,{BackgroundColor3=T.Accent}) end)
-
     local footLbl=Instance.new("TextLabel",card);footLbl.Size=UDim2.new(1,-32,0,20)
     footLbl.Position=UDim2.new(0,16,0,370);footLbl.BackgroundTransparency=1
     footLbl.Text="Susano V1.0  |  Anahtar almak için Discord'a gel"
     footLbl.TextColor3=T.TextFaint;footLbl.Font=Enum.Font.GothamMedium;footLbl.TextSize=11
-
-    -- ===== GİRİŞ MANTIĞI =====
     local attempts=0
     local busy=false
-
     local function tryActivate()
         if busy then return end
         local key=inputBox.Text:upper():gsub("%s+","")
-        if key=="" then
-            statusLbl.Text="Anahtar gir.";statusLbl.TextColor3=T.KeyRed;return
-        end
-
+        if key=="" then statusLbl.Text="Anahtar gir.";statusLbl.TextColor3=T.KeyRed;return end
         busy=true
         statusLbl.Text="Doğrulanıyor…";statusLbl.TextColor3=T.TextDim
         activateBtn.Text="KONTROL EDİLİYOR…";activateBtn.BackgroundColor3=T.AccentFaint
-
         validateKey(key, function(ok, result)
             busy=false
             activateBtn.Text="GİRİŞ YAP";activateBtn.BackgroundColor3=T.Accent
-
             if ok then
-                -- Başarı
                 if remOn then safeWrite(KEY_FILE, key) end
                 activeKey=key
                 statusLbl.Text="Geçerli anahtar!  Tür: "..result:upper()
@@ -546,7 +459,6 @@ local function buildKeyMenu(onSuccess)
                 keyValidated=true;keyType=result;_G.Verified=true
                 onSuccess(result)
             else
-                -- Hata
                 attempts=attempts+1
                 statusLbl.Text=tostring(result).."  ("..attempts.." deneme)"
                 statusLbl.TextColor3=T.KeyRed
@@ -555,21 +467,13 @@ local function buildKeyMenu(onSuccess)
                 task.wait(0.25)
                 tw(inputBox,0.2,{BackgroundColor3=T.Card})
                 tw(ibStroke,0.3,{Color=T.BorderLight})
-                if attempts>=5 then
-                    statusLbl.Text="Çok fazla yanlış deneme."
-                    task.wait(1.5);keyMenuGui:Destroy()
-                end
+                if attempts>=5 then statusLbl.Text="Çok fazla yanlış deneme.";task.wait(1.5);keyMenuGui:Destroy() end
             end
         end)
     end
-
     activateBtn.MouseButton1Click:Connect(tryActivate)
     inputBox.FocusLost:Connect(function(enter) if enter then tryActivate() end end)
-
-    -- Input'a otomatik focus
     task.spawn(function() task.wait(0.05);inputBox:CaptureFocus() end)
-
-    -- Giriş animasyonu (çok hızlı)
     card.BackgroundTransparency=1;card.Position=UDim2.new(0.5,-230,0.5,-240)
     tw(card,0.18,{BackgroundTransparency=0,Position=UDim2.new(0.5,-230,0.5,-250)})
 end
@@ -608,8 +512,7 @@ buildCrosshair=function()
     destroyCrosshair();if not _G.Crosshair then return end
     chGui=makeGui("SusanoCH",200)
     local col=Color3.fromRGB(_G.CrosshairR,_G.CrosshairG,_G.CrosshairB)
-    local s=_G.CrosshairSize;local g=_G.CrosshairGap;local th=_G.CrosshairThick
-    local alpha=1-_G.CrosshairAlpha
+    local s=_G.CrosshairSize;local g=_G.CrosshairGap;local th=_G.CrosshairThick;local alpha=1-_G.CrosshairAlpha
     local function mkLine(w,h,ox,oy)
         local f=Instance.new("Frame",chGui);f.BackgroundColor3=col
         f.BorderSizePixel=0;f.BackgroundTransparency=alpha
@@ -644,24 +547,42 @@ local function updateSkeleton()
         local hum=player.Character:FindFirstChildOfClass("Humanoid")
         if not (show and hum and hum.Health>0) then clearSkeleton(player);continue end
         local char=player.Character;local bL=char:FindFirstChild("UpperTorso") and BONES_R15 or BONES_R6
-        if not skelDrawings[player] then skelDrawings[player]={};for _=1,#bL do local l=Drawing.new("Line");l.Visible=false;l.Thickness=1.5;l.Transparency=0.15;l.Color=Color3.new(1,1,1);table.insert(skelDrawings[player],l) end end
+        if not skelDrawings[player] then
+            skelDrawings[player]={}
+            for _=1,#bL do local l=Drawing.new("Line");l.Visible=false;l.Thickness=1.5;l.Transparency=0.15;l.Color=Color3.new(1,1,1);table.insert(skelDrawings[player],l) end
+        end
         local col=friendly and Color3.fromRGB(_G.ESPFriendR,_G.ESPFriendG,_G.ESPFriendB) or Color3.fromRGB(_G.ESPEnemyR,_G.ESPEnemyG,_G.ESPEnemyB)
-        for i,bone in ipairs(bL) do local line=skelDrawings[player][i];if not line then continue end;local p1=char:FindFirstChild(bone[1]);local p2=char:FindFirstChild(bone[2]);if p1 and p2 then local sp1,o1=Camera:WorldToViewportPoint(p1.Position);local sp2,o2=Camera:WorldToViewportPoint(p2.Position);if o1 and o2 then line.Visible=true;line.From=Vector2.new(sp1.X,sp1.Y);line.To=Vector2.new(sp2.X,sp2.Y);line.Color=col else line.Visible=false end else line.Visible=false end end
+        for i,bone in ipairs(bL) do
+            local line=skelDrawings[player][i];if not line then continue end
+            local p1=char:FindFirstChild(bone[1]);local p2=char:FindFirstChild(bone[2])
+            if p1 and p2 then
+                local sp1,o1=Camera:WorldToViewportPoint(p1.Position);local sp2,o2=Camera:WorldToViewportPoint(p2.Position)
+                if o1 and o2 then line.Visible=true;line.From=Vector2.new(sp1.X,sp1.Y);line.To=Vector2.new(sp2.X,sp2.Y);line.Color=col else line.Visible=false end
+            else line.Visible=false end
+        end
     end
 end
 
--- ========== AIMBOT HELPERS ==========
-local function getTargetPart(p) if not p.Character then return nil end;if _G.AimbotPartHead then local h=p.Character:FindFirstChild("Head");if h then return h end end;if _G.AimbotPartChest then local c=p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso");if c then return c end end;if _G.AimbotPartStomach then local s=p.Character:FindFirstChild("LowerTorso") or p.Character:FindFirstChild("HumanoidRootPart");if s then return s end end;return p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HumanoidRootPart") end
+-- ========== AIMBOT ==========
+local function getTargetPart(p)
+    if not p.Character then return nil end
+    if _G.AimbotPartHead    then local h=p.Character:FindFirstChild("Head");if h then return h end end
+    if _G.AimbotPartChest   then local c=p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso");if c then return c end end
+    if _G.AimbotPartStomach then local s=p.Character:FindFirstChild("LowerTorso") or p.Character:FindFirstChild("HumanoidRootPart");if s then return s end end
+    return p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HumanoidRootPart")
+end
 local function getBestTarget()
     local best,bDist=nil,math.huge;local center=Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y/2)
     for _,p in ipairs(Players:GetPlayers()) do
         if p~=LocalPlayer and p.Character then
             local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team
-            if friendly and not _G.ShowFriendly then continue end;if not friendly and not _G.TeamCheck then continue end
+            if friendly and not _G.ShowFriendly then continue end
+            if not friendly and not _G.TeamCheck then continue end
             local hum=p.Character:FindFirstChildOfClass("Humanoid");if not hum or hum.Health<=0 then continue end
             local part=getTargetPart(p);if not part then continue end
             local sp,onScreen=Camera:WorldToViewportPoint(part.Position);if not onScreen then continue end
-            local dist=(Vector2.new(sp.X,sp.Y)-center).Magnitude;if _G.UseFOV and dist>_G.FOVSize then continue end
+            local dist=(Vector2.new(sp.X,sp.Y)-center).Magnitude
+            if _G.UseFOV and dist>_G.FOVSize then continue end
             if dist<bDist then bDist=dist;best={part=part,player=p} end
         end
     end;return best
@@ -702,41 +623,319 @@ enableRageAimbot=function()
     rageConn=RunService.RenderStepped:Connect(function()
         if not _G.RageAimbot then disableRageAimbot();return end
         local best,bDist=nil,math.huge
-        for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer and p.Character then local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team;if friendly and not _G.ShowFriendly then continue end;if not friendly and not _G.TeamCheck then continue end;local hum=p.Character:FindFirstChildOfClass("Humanoid");if not hum or hum.Health<=0 then continue end;for _,pn in ipairs({"Head","UpperTorso","Torso","HumanoidRootPart"}) do local part=p.Character:FindFirstChild(pn);if part then local d=(part.Position-Camera.CFrame.Position).Magnitude;if d<bDist then bDist=d;best=part end end end end end
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LocalPlayer and p.Character then
+                local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team
+                if friendly and not _G.ShowFriendly then continue end
+                if not friendly and not _G.TeamCheck then continue end
+                local hum=p.Character:FindFirstChildOfClass("Humanoid");if not hum or hum.Health<=0 then continue end
+                for _,pn in ipairs({"Head","UpperTorso","Torso","HumanoidRootPart"}) do
+                    local part=p.Character:FindFirstChild(pn)
+                    if part then local d=(part.Position-Camera.CFrame.Position).Magnitude;if d<bDist then bDist=d;best=part end end
+                end
+            end
+        end
         if best then Camera.CFrame=CFrame.new(Camera.CFrame.Position,best.Position);updateFOVColor(Color3.fromRGB(255,80,80)) else updateFOVColor(Color3.new(1,1,1)) end
     end)
 end
 
 -- ========== MOVEMENT ==========
-local ijConn;enableInfiniteJump=function() if ijConn then ijConn:Disconnect() end;ijConn=UserInputService.JumpRequest:Connect(function() if not _G.InfiniteJump then return end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end end) end;disableInfiniteJump=function() if ijConn then ijConn:Disconnect();ijConn=nil end end
-local ljConn;enableLongJump=function() if ljConn then ljConn:Disconnect() end;ljConn=UserInputService.JumpRequest:Connect(function() if not _G.LongJump then return end;local c=LocalPlayer.Character;if not c then return end;local hrp=c:FindFirstChild("HumanoidRootPart");local hum=c:FindFirstChildOfClass("Humanoid");if hrp and hum and hum.FloorMaterial~=Enum.Material.Air then local bv=Instance.new("BodyVelocity");bv.Velocity=hrp.CFrame.LookVector*_G.LongJumpPower+Vector3.new(0,30,0);bv.MaxForce=Vector3.new(1e5,1e5,1e5);bv.P=1e4;bv.Parent=hrp;game:GetService("Debris"):AddItem(bv,0.15) end end) end;disableLongJump=function() if ljConn then ljConn:Disconnect();ljConn=nil end end
-local swimConn;enableSwimHack=function() if swimConn then swimConn:Disconnect() end;swimConn=RunService.Stepped:Connect(function() if not _G.SwimHack then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");if hum and hum:GetState()==Enum.HumanoidStateType.Swimming then hum.WalkSpeed=16*_G.SpeedMultiplier end end) end
-local bhopConn,bhopActive=nil,false;enableBhop=function() if bhopActive then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");if not hum then return end;bhopActive=true;bhopConn=RunService.RenderStepped:Connect(function() if not _G.BunnyHop or not c or not hum then bhopActive=false;if bhopConn then bhopConn:Disconnect() end;return end;if hum.FloorMaterial~=Enum.Material.Air then hum.JumpPower=_G.BunnyHopHeight;hum.Jump=true end;hum.WalkSpeed=hum.MoveDirection.Magnitude>0 and 16*_G.BunnyHopSpeed or 16 end) end;disableBhop=function() bhopActive=false;if bhopConn then bhopConn:Disconnect();bhopConn=nil end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.WalkSpeed=16;h.JumpPower=50 end end end
-local spdConn,spdActive=nil,false;local origSpeed=16;enableSpeed=function() if spdActive then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");if not hum then return end;spdActive=true;origSpeed=hum.WalkSpeed;spdConn=RunService.RenderStepped:Connect(function() if not _G.SpeedHack or not c or not hum then spdActive=false;if spdConn then spdConn:Disconnect() end;return end;hum.WalkSpeed=origSpeed*_G.SpeedMultiplier*(hum.MoveDirection.Magnitude>0 and 1.1 or 1) end) end;disableSpeed=function() spdActive=false;if spdConn then spdConn:Disconnect();spdConn=nil end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.WalkSpeed=origSpeed end end end
-local flyConn,flying=nil,false;local bVel,bGyro;enableFly=function() if flying then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");local hrp=c:FindFirstChild("HumanoidRootPart");if not hum or not hrp then return end;flying=true;bVel=Instance.new("BodyVelocity");bVel.MaxForce=Vector3.new(1e5,1e5,1e5);bVel.P=1e4;bVel.Parent=hrp;bGyro=Instance.new("BodyGyro");bGyro.MaxTorque=Vector3.new(1e5,1e5,1e5);bGyro.P=1e4;bGyro.D=100;bGyro.Parent=hrp;flyConn=RunService.RenderStepped:Connect(function() if not flying or not hrp then disableFly();return end;bGyro.CFrame=Camera.CFrame;local v=Vector3.zero;local ui=UserInputService;if ui:IsKeyDown(Enum.KeyCode.W) then v=v+Camera.CFrame.LookVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.S) then v=v-Camera.CFrame.LookVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.D) then v=v+Camera.CFrame.RightVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.A) then v=v-Camera.CFrame.RightVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.Space) then v=v+Vector3.new(0,_G.FlySpeed,0) end;if ui:IsKeyDown(Enum.KeyCode.LeftShift) or ui:IsKeyDown(Enum.KeyCode.Q) then v=v-Vector3.new(0,_G.FlySpeed,0) end;bVel.Velocity=v;if hum:GetState()~=Enum.HumanoidStateType.Freefall then hum:ChangeState(Enum.HumanoidStateType.Freefall) end end) end;disableFly=function() flying=false;if flyConn then flyConn:Disconnect();flyConn=nil end;if bVel then bVel:Destroy();bVel=nil end;if bGyro then bGyro:Destroy();bGyro=nil end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Landed) end end end
-local ncConn,ncActive=nil,false;enableNoclip=function() if ncActive then return end;ncActive=true;ncConn=RunService.Stepped:Connect(function() if not ncActive or not LocalPlayer.Character then ncActive=false;if ncConn then ncConn:Disconnect() end;return end;for _,p in pairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") and p.CanCollide then p.CanCollide=false;setnetworkowner(p,LocalPlayer) end end end) end;disableNoclip=function() ncActive=false;if ncConn then ncConn:Disconnect();ncConn=nil end;local c=LocalPlayer.Character;if c then for _,p in pairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end end
+local ijConn
+enableInfiniteJump=function()
+    if ijConn then ijConn:Disconnect() end
+    ijConn=UserInputService.JumpRequest:Connect(function()
+        if not _G.InfiniteJump then return end
+        local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end
+    end)
+end
+disableInfiniteJump=function() if ijConn then ijConn:Disconnect();ijConn=nil end end
+
+local ljConn
+enableLongJump=function()
+    if ljConn then ljConn:Disconnect() end
+    ljConn=UserInputService.JumpRequest:Connect(function()
+        if not _G.LongJump then return end
+        local c=LocalPlayer.Character;if not c then return end
+        local hrp=c:FindFirstChild("HumanoidRootPart");local hum=c:FindFirstChildOfClass("Humanoid")
+        if hrp and hum and hum.FloorMaterial~=Enum.Material.Air then
+            local bv=Instance.new("BodyVelocity");bv.Velocity=hrp.CFrame.LookVector*_G.LongJumpPower+Vector3.new(0,30,0)
+            bv.MaxForce=Vector3.new(1e5,1e5,1e5);bv.P=1e4;bv.Parent=hrp;game:GetService("Debris"):AddItem(bv,0.15)
+        end
+    end)
+end
+disableLongJump=function() if ljConn then ljConn:Disconnect();ljConn=nil end end
+
+local swimConn
+enableSwimHack=function()
+    if swimConn then swimConn:Disconnect() end
+    swimConn=RunService.Stepped:Connect(function()
+        if not _G.SwimHack then return end
+        local c=LocalPlayer.Character;if not c then return end
+        local hum=c:FindFirstChildOfClass("Humanoid")
+        if hum and hum:GetState()==Enum.HumanoidStateType.Swimming then hum.WalkSpeed=16*_G.SpeedMultiplier end
+    end)
+end
+
+local bhopConn,bhopActive=nil,false
+enableBhop=function()
+    if bhopActive then return end
+    local c=LocalPlayer.Character;if not c then return end
+    local hum=c:FindFirstChildOfClass("Humanoid");if not hum then return end
+    bhopActive=true
+    bhopConn=RunService.RenderStepped:Connect(function()
+        if not _G.BunnyHop or not c or not hum then bhopActive=false;if bhopConn then bhopConn:Disconnect() end;return end
+        if hum.FloorMaterial~=Enum.Material.Air then hum.JumpPower=_G.BunnyHopHeight;hum.Jump=true end
+        hum.WalkSpeed=hum.MoveDirection.Magnitude>0 and 16*_G.BunnyHopSpeed or 16
+    end)
+end
+disableBhop=function()
+    bhopActive=false;if bhopConn then bhopConn:Disconnect();bhopConn=nil end
+    local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.WalkSpeed=16;h.JumpPower=50 end end
+end
+
+local spdConn,spdActive=nil,false;local origSpeed=16
+enableSpeed=function()
+    if spdActive then return end
+    local c=LocalPlayer.Character;if not c then return end
+    local hum=c:FindFirstChildOfClass("Humanoid");if not hum then return end
+    spdActive=true;origSpeed=hum.WalkSpeed
+    spdConn=RunService.RenderStepped:Connect(function()
+        if not _G.SpeedHack or not c or not hum then spdActive=false;if spdConn then spdConn:Disconnect() end;return end
+        hum.WalkSpeed=origSpeed*_G.SpeedMultiplier*(hum.MoveDirection.Magnitude>0 and 1.1 or 1)
+    end)
+end
+disableSpeed=function()
+    spdActive=false;if spdConn then spdConn:Disconnect();spdConn=nil end
+    local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h.WalkSpeed=origSpeed end end
+end
+
+local flyConn,flying=nil,false;local bVel,bGyro
+enableFly=function()
+    if flying then return end
+    local c=LocalPlayer.Character;if not c then return end
+    local hum=c:FindFirstChildOfClass("Humanoid");local hrp=c:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+    flying=true
+    bVel=Instance.new("BodyVelocity");bVel.MaxForce=Vector3.new(1e5,1e5,1e5);bVel.P=1e4;bVel.Parent=hrp
+    bGyro=Instance.new("BodyGyro");bGyro.MaxTorque=Vector3.new(1e5,1e5,1e5);bGyro.P=1e4;bGyro.D=100;bGyro.Parent=hrp
+    flyConn=RunService.RenderStepped:Connect(function()
+        if not flying or not hrp then disableFly();return end
+        bGyro.CFrame=Camera.CFrame;local v=Vector3.zero;local ui=UserInputService
+        if ui:IsKeyDown(Enum.KeyCode.W)         then v=v+Camera.CFrame.LookVector*_G.FlySpeed   end
+        if ui:IsKeyDown(Enum.KeyCode.S)         then v=v-Camera.CFrame.LookVector*_G.FlySpeed   end
+        if ui:IsKeyDown(Enum.KeyCode.D)         then v=v+Camera.CFrame.RightVector*_G.FlySpeed  end
+        if ui:IsKeyDown(Enum.KeyCode.A)         then v=v-Camera.CFrame.RightVector*_G.FlySpeed  end
+        if ui:IsKeyDown(Enum.KeyCode.Space)     then v=v+Vector3.new(0,_G.FlySpeed,0)           end
+        if ui:IsKeyDown(Enum.KeyCode.LeftShift) or ui:IsKeyDown(Enum.KeyCode.Q) then v=v-Vector3.new(0,_G.FlySpeed,0) end
+        bVel.Velocity=v
+        if hum:GetState()~=Enum.HumanoidStateType.Freefall then hum:ChangeState(Enum.HumanoidStateType.Freefall) end
+    end)
+end
+disableFly=function()
+    flying=false;if flyConn then flyConn:Disconnect();flyConn=nil end
+    if bVel then bVel:Destroy();bVel=nil end;if bGyro then bGyro:Destroy();bGyro=nil end
+    local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Landed) end end
+end
+
+local ncConn,ncActive=nil,false
+enableNoclip=function()
+    if ncActive then return end;ncActive=true
+    ncConn=RunService.Stepped:Connect(function()
+        if not ncActive or not LocalPlayer.Character then ncActive=false;if ncConn then ncConn:Disconnect() end;return end
+        for _,p in pairs(LocalPlayer.Character:GetDescendants()) do
+            if p:IsA("BasePart") and p.CanCollide then p.CanCollide=false;setnetworkowner(p,LocalPlayer) end
+        end
+    end)
+end
+disableNoclip=function()
+    ncActive=false;if ncConn then ncConn:Disconnect();ncConn=nil end
+    local c=LocalPlayer.Character;if c then for _,p in pairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end
+end
 
 -- ========== PLAYER FEATURES ==========
-local killAuraConn;enableKillAura=function() if killAuraConn then killAuraConn:Disconnect() end;killAuraConn=RunService.Heartbeat:Connect(function() if not _G.KillAura then return end;local c=LocalPlayer.Character;if not c then return end;local hrp=c:FindFirstChild("HumanoidRootPart");if not hrp then return end;local tool=c:FindFirstChildOfClass("Tool");for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer and p.Character then local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team;if friendly then continue end;local phum=p.Character:FindFirstChildOfClass("Humanoid");local phrp=p.Character:FindFirstChild("HumanoidRootPart");if not phum or not phrp or phum.Health<=0 then continue end;if (phrp.Position-hrp.Position).Magnitude<=_G.KillAuraRange then if tool then for _,child in ipairs(tool:GetDescendants()) do if child:IsA("RemoteEvent") then pcall(function() child:FireServer(p.Character) end) end end;pcall(function() tool:Activate() end) end end end end end) end;disableKillAura=function() if killAuraConn then killAuraConn:Disconnect();killAuraConn=nil end end
-local afkConn;enableAntiAFK=function() if afkConn then afkConn:Disconnect() end;afkConn=RunService.Heartbeat:Connect(function() if not _G.AntiAFK then return end;pcall(function() local vu=game:GetService("VirtualUser");vu:CaptureController();vu:ClickButton2(Vector2.new()) end) end) end;disableAntiAFK=function() if afkConn then afkConn:Disconnect();afkConn=nil end end
-local nameSpoofConn;applyNameSpoof=function() local name=_G.SpoofedName~="" and _G.SpoofedName or LocalPlayer.Name;local function spoofChar(char) if not char then return end;local head=char:FindFirstChild("Head");if not head then return end;for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=not _G.NameSpoof end end;local existing=head:FindFirstChild("SusanoSpoofTag");if _G.NameSpoof then if not existing then local bb=Instance.new("BillboardGui",head);bb.Name="SusanoSpoofTag";bb.AlwaysOnTop=false;bb.Size=UDim2.new(0,250,0,36);bb.StudsOffset=Vector3.new(0,2.2,0);local lbl=Instance.new("TextLabel",bb);lbl.Size=UDim2.new(1,0,1,0);lbl.BackgroundTransparency=1;lbl.TextColor3=Color3.new(1,1,1);lbl.Font=Enum.Font.GothamBold;lbl.TextSize=17;lbl.TextStrokeTransparency=0.5;lbl.Name="SpoofLbl" end;local lbl=head.SusanoSpoofTag:FindFirstChild("SpoofLbl");if lbl then lbl.Text=name end else if existing then existing:Destroy() end;for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=true end end end end;spoofChar(LocalPlayer.Character);if nameSpoofConn then nameSpoofConn:Disconnect() end;if _G.NameSpoof then nameSpoofConn=LocalPlayer.CharacterAdded:Connect(function(char) task.wait(0.5);spoofChar(char) end) end end
+local killAuraConn
+enableKillAura=function()
+    if killAuraConn then killAuraConn:Disconnect() end
+    killAuraConn=RunService.Heartbeat:Connect(function()
+        if not _G.KillAura then return end
+        local c=LocalPlayer.Character;if not c then return end
+        local hrp=c:FindFirstChild("HumanoidRootPart");if not hrp then return end
+        local tool=c:FindFirstChildOfClass("Tool")
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LocalPlayer and p.Character then
+                local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team;if friendly then continue end
+                local phum=p.Character:FindFirstChildOfClass("Humanoid");local phrp=p.Character:FindFirstChild("HumanoidRootPart")
+                if not phum or not phrp or phum.Health<=0 then continue end
+                if (phrp.Position-hrp.Position).Magnitude<=_G.KillAuraRange then
+                    if tool then
+                        for _,child in ipairs(tool:GetDescendants()) do if child:IsA("RemoteEvent") then pcall(function() child:FireServer(p.Character) end) end end
+                        pcall(function() tool:Activate() end)
+                    end
+                end
+            end
+        end
+    end)
+end
+disableKillAura=function() if killAuraConn then killAuraConn:Disconnect();killAuraConn=nil end end
+
+local afkConn
+enableAntiAFK=function()
+    if afkConn then afkConn:Disconnect() end
+    afkConn=RunService.Heartbeat:Connect(function()
+        if not _G.AntiAFK then return end
+        pcall(function() local vu=game:GetService("VirtualUser");vu:CaptureController();vu:ClickButton2(Vector2.new()) end)
+    end)
+end
+disableAntiAFK=function() if afkConn then afkConn:Disconnect();afkConn=nil end end
+
+local nameSpoofConn
+applyNameSpoof=function()
+    local name=_G.SpoofedName~="" and _G.SpoofedName or LocalPlayer.Name
+    local function spoofChar(char)
+        if not char then return end
+        local head=char:FindFirstChild("Head");if not head then return end
+        for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=not _G.NameSpoof end end
+        local existing=head:FindFirstChild("SusanoSpoofTag")
+        if _G.NameSpoof then
+            if not existing then
+                local bb=Instance.new("BillboardGui",head);bb.Name="SusanoSpoofTag";bb.AlwaysOnTop=false
+                bb.Size=UDim2.new(0,250,0,36);bb.StudsOffset=Vector3.new(0,2.2,0)
+                local lbl=Instance.new("TextLabel",bb);lbl.Size=UDim2.new(1,0,1,0);lbl.BackgroundTransparency=1
+                lbl.TextColor3=Color3.new(1,1,1);lbl.Font=Enum.Font.GothamBold;lbl.TextSize=17
+                lbl.TextStrokeTransparency=0.5;lbl.Name="SpoofLbl"
+            end
+            local lbl=head.SusanoSpoofTag:FindFirstChild("SpoofLbl");if lbl then lbl.Text=name end
+        else
+            if existing then existing:Destroy() end
+            for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=true end end
+        end
+    end
+    spoofChar(LocalPlayer.Character)
+    if nameSpoofConn then nameSpoofConn:Disconnect() end
+    if _G.NameSpoof then nameSpoofConn=LocalPlayer.CharacterAdded:Connect(function(char) task.wait(0.5);spoofChar(char) end) end
+end
 
 -- ========== VISUAL ==========
-local origAmbient=Lighting.Ambient;local origBrightness=Lighting.Brightness;local origFogEnd=Lighting.FogEnd;local origFogStart=Lighting.FogStart;local origCamFOV=Camera.FieldOfView;local origTimeOfDay=Lighting.TimeOfDay;local origColorShift=Lighting.ColorShift_Top
-applyFullBright=function(v) if v then Lighting.Ambient=Color3.new(1,1,1);Lighting.Brightness=2;for _,e in ipairs(Lighting:GetChildren()) do if e:IsA("BlurEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("SunRaysEffect") or e:IsA("BloomEffect") then e.Enabled=false end end else Lighting.Ambient=origAmbient;Lighting.Brightness=origBrightness end end
+local origAmbient=Lighting.Ambient;local origBrightness=Lighting.Brightness
+local origFogEnd=Lighting.FogEnd;local origFogStart=Lighting.FogStart
+local origCamFOV=Camera.FieldOfView;local origTimeOfDay=Lighting.TimeOfDay
+local origColorShift=Lighting.ColorShift_Top
+
+applyFullBright=function(v)
+    if v then
+        Lighting.Ambient=Color3.new(1,1,1);Lighting.Brightness=2
+        for _,e in ipairs(Lighting:GetChildren()) do
+            if e:IsA("BlurEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("SunRaysEffect") or e:IsA("BloomEffect") then e.Enabled=false end
+        end
+    else Lighting.Ambient=origAmbient;Lighting.Brightness=origBrightness end
+end
 applyNoFog=function(v) if v then Lighting.FogEnd=1e6;Lighting.FogStart=1e6 else Lighting.FogEnd=origFogEnd;Lighting.FogStart=origFogStart end end
 applyTime=function(v) if v then Lighting.TimeOfDay=string.format("%02d:00:00",math.floor(_G.TimeOfDay)) else Lighting.TimeOfDay=origTimeOfDay end end
 applyWorldColor=function(v) if v then Lighting.ColorShift_Top=Color3.fromRGB(_G.WorldR,_G.WorldG,_G.WorldB) else Lighting.ColorShift_Top=origColorShift end end
-local tpConn;enableThirdPerson=function() Camera.CameraType=Enum.CameraType.Scriptable;if tpConn then tpConn:Disconnect() end;tpConn=RunService.RenderStepped:Connect(function() if not _G.ThirdPerson then disableThirdPerson();return end;local c=LocalPlayer.Character;if not c then return end;local hrp=c:FindFirstChild("HumanoidRootPart");if not hrp then return end;local d=_G.ThirdPersonDist;Camera.CFrame=CFrame.new(hrp.CFrame.Position-hrp.CFrame.LookVector*d+Vector3.new(0,d*0.4,0),hrp.Position) end) end;disableThirdPerson=function() if tpConn then tpConn:Disconnect();tpConn=nil end;Camera.CameraType=Enum.CameraType.Custom end
+
+local tpConn
+enableThirdPerson=function()
+    Camera.CameraType=Enum.CameraType.Scriptable;if tpConn then tpConn:Disconnect() end
+    tpConn=RunService.RenderStepped:Connect(function()
+        if not _G.ThirdPerson then disableThirdPerson();return end
+        local c=LocalPlayer.Character;if not c then return end
+        local hrp=c:FindFirstChild("HumanoidRootPart");if not hrp then return end
+        local d=_G.ThirdPersonDist
+        Camera.CFrame=CFrame.new(hrp.CFrame.Position-hrp.CFrame.LookVector*d+Vector3.new(0,d*0.4,0),hrp.Position)
+    end)
+end
+disableThirdPerson=function() if tpConn then tpConn:Disconnect();tpConn=nil end;Camera.CameraType=Enum.CameraType.Custom end
 
 -- ========== ESP ==========
 local espCache,esp2D,espTracers={},{},{}
 local function getESPColors() return Color3.fromRGB(_G.ESPEnemyR,_G.ESPEnemyG,_G.ESPEnemyB),Color3.fromRGB(_G.ESPFriendR,_G.ESPFriendG,_G.ESPFriendB),Color3.fromRGB(_G.ESPVisR,_G.ESPVisG,_G.ESPVisB) end
-local function isVisible(player) if not player.Character then return false end;local head=player.Character:FindFirstChild("Head");if not head then return false end;local origin=Camera.CFrame.Position;local ray=Ray.new(origin,(head.Position-origin).Unit*1000);local hit=Workspace:FindPartOnRayWithIgnoreList(ray,{LocalPlayer.Character,player.Character});return hit==nil end
-local function clearESPPlayer(p) if espCache[p] then if espCache[p].hl then espCache[p].hl:Destroy() end;if espCache[p].bb then espCache[p].bb:Destroy() end;if espCache[p].hbBB then espCache[p].hbBB:Destroy() end;espCache[p]=nil end;if esp2D[p] then for _,v in pairs(esp2D[p]) do pcall(function() v:Remove() end) end;esp2D[p]=nil end;if espTracers[p] then pcall(function() espTracers[p]:Remove() end);espTracers[p]=nil end;clearSkeleton(p) end
+local function isVisible(player)
+    if not player.Character then return false end
+    local head=player.Character:FindFirstChild("Head");if not head then return false end
+    local origin=Camera.CFrame.Position;local ray=Ray.new(origin,(head.Position-origin).Unit*1000)
+    local hit=Workspace:FindPartOnRayWithIgnoreList(ray,{LocalPlayer.Character,player.Character});return hit==nil
+end
+local function clearESPPlayer(p)
+    if espCache[p] then if espCache[p].hl then espCache[p].hl:Destroy() end;if espCache[p].bb then espCache[p].bb:Destroy() end;if espCache[p].hbBB then espCache[p].hbBB:Destroy() end;espCache[p]=nil end
+    if esp2D[p] then for _,v in pairs(esp2D[p]) do pcall(function() v:Remove() end) end;esp2D[p]=nil end
+    if espTracers[p] then pcall(function() espTracers[p]:Remove() end);espTracers[p]=nil end
+    clearSkeleton(p)
+end
 local function clearAllESP() for p in pairs(espCache) do clearESPPlayer(p) end end
-local function buildESP(player) if not _G.ESP or player==LocalPlayer then return end;local char=player.Character;if not char then return end;local hrp=char:WaitForChild("HumanoidRootPart",5);if not hrp then return end;local hum=char:FindFirstChildOfClass("Humanoid");local hl=Instance.new("Highlight");hl.Adornee=char;hl.FillTransparency=0.75;hl.OutlineColor=Color3.new(1,1,1);hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop;hl.Enabled=false;hl.Parent=CoreGui;local bb=Instance.new("BillboardGui");bb.Size=UDim2.new(6,0,3,0);bb.AlwaysOnTop=true;bb.StudsOffset=Vector3.new(0,4,0);bb.Adornee=hrp;bb.Enabled=false;bb.Parent=CoreGui;local function lbl(pos,sz,col,fs) local l=Instance.new("TextLabel",bb);l.Size=UDim2.new(1,0,sz,0);l.Position=UDim2.new(0,0,pos,0);l.BackgroundTransparency=1;l.TextColor3=col;l.Font=Enum.Font.GothamBold;l.TextSize=fs;l.TextStrokeTransparency=0.4;return l end;local idLbl=lbl(0,0.3,Color3.fromRGB(160,160,255),12);local nameLbl=lbl(0.3,0.4,Color3.new(1,1,1),16);local dstLbl=lbl(0.7,0.3,Color3.fromRGB(255,220,80),12);local hbBB=Instance.new("BillboardGui");hbBB.Size=UDim2.new(0.4,0,2,0);hbBB.AlwaysOnTop=true;hbBB.StudsOffset=Vector3.new(-1.8,2,0);hbBB.Adornee=hrp;hbBB.Enabled=false;hbBB.Parent=CoreGui;local hbBG=Instance.new("Frame",hbBB);hbBG.Size=UDim2.new(0,4,1,0);hbBG.BackgroundColor3=Color3.fromRGB(20,20,20);hbBG.BorderSizePixel=0;local hbFill=Instance.new("Frame",hbBG);hbFill.Size=UDim2.new(1,0,1,0);hbFill.BackgroundColor3=Color3.fromRGB(80,255,120);hbFill.BorderSizePixel=0;espCache[player]={hl=hl,bb=bb,hbBB=hbBB,hbBG=hbBG,hbFill=hbFill,idLbl=idLbl,nameLbl=nameLbl,dstLbl=dstLbl,hrp=hrp,hum=hum};local e={};e.box=Drawing.new("Square");e.box.Visible=false;e.box.Thickness=1.5;e.box.Filled=false;e.name=Drawing.new("Text");e.name.Visible=false;e.name.Size=14;e.name.Font=2;e.name.Center=true;e.dist=Drawing.new("Text");e.dist.Visible=false;e.dist.Size=12;e.dist.Font=2;e.dist.Center=true;e.dist.Color=Color3.fromRGB(255,220,80);e.id=Drawing.new("Text");e.id.Visible=false;e.id.Size=11;e.id.Font=2;e.id.Center=true;e.id.Color=Color3.fromRGB(160,160,255);e.hbg=Drawing.new("Square");e.hbg.Visible=false;e.hbg.Filled=true;e.hbg.Color=Color3.fromRGB(20,20,20);e.hfill=Drawing.new("Square");e.hfill.Visible=false;e.hfill.Filled=true;esp2D[player]=e;local tr=Drawing.new("Line");tr.Visible=false;tr.Thickness=_G.TracerThick;tr.Transparency=0.3;espTracers[player]=tr end
-local function updateESP() if not _G.ESP then clearAllESP();return end;local myHRP=LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart");if not myHRP then return end;local cEnemy,cFriend,cVis=getESPColors();for player,cache in pairs(espCache) do if not (player and player.Parent and cache.hrp and cache.hrp.Parent) then clearESPPlayer(player);continue end;local char=player.Character;local hum=char and char:FindFirstChildOfClass("Humanoid");local hrp=cache.hrp;local dist=(hrp.Position-myHRP.Position).Magnitude;local friendly=player.Team and LocalPlayer.Team and player.Team==LocalPlayer.Team;local show=(friendly and _G.ShowFriendly) or (not friendly and _G.TeamCheck);if not (show and hum and hum.Health>0) then show=false end;local vis=(_G.WallCheck and not friendly) and isVisible(player) or false;local col=friendly and cFriend or ((_G.WallCheck and vis) and cVis or cEnemy);if cache.hl then cache.hl.Enabled=_G.ESPBox3D and show;if cache.hl.Enabled then cache.hl.FillColor=col end end;if cache.bb then cache.bb.Enabled=show;if show then cache.idLbl.Visible=_G.ShowID;cache.idLbl.Text="ID: "..player.UserId;cache.nameLbl.Visible=_G.ShowNames;cache.nameLbl.Text=player.Name;cache.dstLbl.Visible=_G.ShowDistance;cache.dstLbl.Text=math.floor(dist).."m" end end;if cache.hbBB then cache.hbBB.Enabled=_G.ShowHealthBar and show;if cache.hbBB.Enabled and hum and hum.Health>0 then local pct=hum.Health/hum.MaxHealth;cache.hbFill.Size=UDim2.new(1,0,pct,0);cache.hbFill.Position=UDim2.new(0,0,1-pct,0);cache.hbFill.BackgroundColor3=pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80)) end end;local e=esp2D[player];if e then if _G.ESPBox2D and show then local sp,onSc=Camera:WorldToViewportPoint(hrp.Position);if onSc then local head=char:FindFirstChild("Head");if head then local sh=Camera:WorldToViewportPoint(head.Position);local h=math.abs(sh.Y-sp.Y)*2.3;local w=h*0.55;local tl=Vector2.new(sp.X-w/2,sh.Y-h/2);e.box.Visible=true;e.box.Position=tl;e.box.Size=Vector2.new(w,h);e.box.Color=col;if _G.ShowNames then e.name.Visible=true;e.name.Position=Vector2.new(sp.X,sh.Y-h/2-18);e.name.Text=player.Name;e.name.Color=Color3.new(1,1,1) else e.name.Visible=false end;if _G.ShowDistance then e.dist.Visible=true;e.dist.Position=Vector2.new(sp.X,sh.Y+h/2+4);e.dist.Text=math.floor(dist).."m" else e.dist.Visible=false end;if _G.ShowID then e.id.Visible=true;e.id.Position=Vector2.new(sp.X,sh.Y-h/2-32);e.id.Text="ID: "..player.UserId else e.id.Visible=false end;if _G.ShowHealthBar and hum and hum.Health>0 then local pct=hum.Health/hum.MaxHealth;e.hbg.Visible=true;e.hbg.Position=Vector2.new(tl.X-7,tl.Y);e.hbg.Size=Vector2.new(3,h);e.hfill.Visible=true;e.hfill.Position=Vector2.new(tl.X-7,tl.Y+h*(1-pct));e.hfill.Size=Vector2.new(3,h*pct);e.hfill.Color=pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80)) else e.hbg.Visible=false;e.hfill.Visible=false end else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end end;local tr=espTracers[player];if tr then tr.Thickness=_G.TracerThick;if _G.ShowTracer and show then local sp,onSc=Camera:WorldToViewportPoint(hrp.Position);if onSc then tr.Visible=true;tr.From=Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y);tr.To=Vector2.new(sp.X,sp.Y);tr.Color=col else tr.Visible=false end else tr.Visible=false end end end end
+local function buildESP(player)
+    if not _G.ESP or player==LocalPlayer then return end
+    local char=player.Character;if not char then return end
+    local hrp=char:WaitForChild("HumanoidRootPart",5);if not hrp then return end
+    local hum=char:FindFirstChildOfClass("Humanoid")
+    local hl=Instance.new("Highlight");hl.Adornee=char;hl.FillTransparency=0.75;hl.OutlineColor=Color3.new(1,1,1)
+    hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop;hl.Enabled=false;hl.Parent=CoreGui
+    local bb=Instance.new("BillboardGui");bb.Size=UDim2.new(6,0,3,0);bb.AlwaysOnTop=true
+    bb.StudsOffset=Vector3.new(0,4,0);bb.Adornee=hrp;bb.Enabled=false;bb.Parent=CoreGui
+    local function lbl(pos,sz,col,fs)
+        local l=Instance.new("TextLabel",bb);l.Size=UDim2.new(1,0,sz,0);l.Position=UDim2.new(0,0,pos,0)
+        l.BackgroundTransparency=1;l.TextColor3=col;l.Font=Enum.Font.GothamBold;l.TextSize=fs;l.TextStrokeTransparency=0.4;return l
+    end
+    local idLbl=lbl(0,0.3,Color3.fromRGB(160,160,255),12);local nameLbl=lbl(0.3,0.4,Color3.new(1,1,1),16);local dstLbl=lbl(0.7,0.3,Color3.fromRGB(255,220,80),12)
+    local hbBB=Instance.new("BillboardGui");hbBB.Size=UDim2.new(0.4,0,2,0);hbBB.AlwaysOnTop=true
+    hbBB.StudsOffset=Vector3.new(-1.8,2,0);hbBB.Adornee=hrp;hbBB.Enabled=false;hbBB.Parent=CoreGui
+    local hbBG=Instance.new("Frame",hbBB);hbBG.Size=UDim2.new(0,4,1,0);hbBG.BackgroundColor3=Color3.fromRGB(20,20,20);hbBG.BorderSizePixel=0
+    local hbFill=Instance.new("Frame",hbBG);hbFill.Size=UDim2.new(1,0,1,0);hbFill.BackgroundColor3=Color3.fromRGB(80,255,120);hbFill.BorderSizePixel=0
+    espCache[player]={hl=hl,bb=bb,hbBB=hbBB,hbBG=hbBG,hbFill=hbFill,idLbl=idLbl,nameLbl=nameLbl,dstLbl=dstLbl,hrp=hrp,hum=hum}
+    local e={}
+    e.box=Drawing.new("Square");e.box.Visible=false;e.box.Thickness=1.5;e.box.Filled=false
+    e.name=Drawing.new("Text");e.name.Visible=false;e.name.Size=14;e.name.Font=2;e.name.Center=true
+    e.dist=Drawing.new("Text");e.dist.Visible=false;e.dist.Size=12;e.dist.Font=2;e.dist.Center=true;e.dist.Color=Color3.fromRGB(255,220,80)
+    e.id=Drawing.new("Text");e.id.Visible=false;e.id.Size=11;e.id.Font=2;e.id.Center=true;e.id.Color=Color3.fromRGB(160,160,255)
+    e.hbg=Drawing.new("Square");e.hbg.Visible=false;e.hbg.Filled=true;e.hbg.Color=Color3.fromRGB(20,20,20)
+    e.hfill=Drawing.new("Square");e.hfill.Visible=false;e.hfill.Filled=true
+    esp2D[player]=e
+    local tr=Drawing.new("Line");tr.Visible=false;tr.Thickness=_G.TracerThick;tr.Transparency=0.3;espTracers[player]=tr
+end
+local function updateESP()
+    if not _G.ESP then clearAllESP();return end
+    local myHRP=LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart");if not myHRP then return end
+    local cEnemy,cFriend,cVis=getESPColors()
+    for player,cache in pairs(espCache) do
+        if not (player and player.Parent and cache.hrp and cache.hrp.Parent) then clearESPPlayer(player);continue end
+        local char=player.Character;local hum=char and char:FindFirstChildOfClass("Humanoid");local hrp=cache.hrp
+        local dist=(hrp.Position-myHRP.Position).Magnitude
+        local friendly=player.Team and LocalPlayer.Team and player.Team==LocalPlayer.Team
+        local show=(friendly and _G.ShowFriendly) or (not friendly and _G.TeamCheck)
+        if not (show and hum and hum.Health>0) then show=false end
+        local vis=(_G.WallCheck and not friendly) and isVisible(player) or false
+        local col=friendly and cFriend or ((_G.WallCheck and vis) and cVis or cEnemy)
+        if cache.hl then cache.hl.Enabled=_G.ESPBox3D and show;if cache.hl.Enabled then cache.hl.FillColor=col end end
+        if cache.bb then cache.bb.Enabled=show;if show then cache.idLbl.Visible=_G.ShowID;cache.idLbl.Text="ID: "..player.UserId;cache.nameLbl.Visible=_G.ShowNames;cache.nameLbl.Text=player.Name;cache.dstLbl.Visible=_G.ShowDistance;cache.dstLbl.Text=math.floor(dist).."m" end end
+        if cache.hbBB then cache.hbBB.Enabled=_G.ShowHealthBar and show;if cache.hbBB.Enabled and hum and hum.Health>0 then local pct=hum.Health/hum.MaxHealth;cache.hbFill.Size=UDim2.new(1,0,pct,0);cache.hbFill.Position=UDim2.new(0,0,1-pct,0);cache.hbFill.BackgroundColor3=pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80)) end end
+        local e=esp2D[player]
+        if e then
+            if _G.ESPBox2D and show then
+                local sp,onSc=Camera:WorldToViewportPoint(hrp.Position)
+                if onSc then
+                    local head=char:FindFirstChild("Head")
+                    if head then
+                        local sh=Camera:WorldToViewportPoint(head.Position);local h=math.abs(sh.Y-sp.Y)*2.3;local w=h*0.55;local tl=Vector2.new(sp.X-w/2,sh.Y-h/2)
+                        e.box.Visible=true;e.box.Position=tl;e.box.Size=Vector2.new(w,h);e.box.Color=col
+                        if _G.ShowNames then e.name.Visible=true;e.name.Position=Vector2.new(sp.X,sh.Y-h/2-18);e.name.Text=player.Name;e.name.Color=Color3.new(1,1,1) else e.name.Visible=false end
+                        if _G.ShowDistance then e.dist.Visible=true;e.dist.Position=Vector2.new(sp.X,sh.Y+h/2+4);e.dist.Text=math.floor(dist).."m" else e.dist.Visible=false end
+                        if _G.ShowID then e.id.Visible=true;e.id.Position=Vector2.new(sp.X,sh.Y-h/2-32);e.id.Text="ID: "..player.UserId else e.id.Visible=false end
+                        if _G.ShowHealthBar and hum and hum.Health>0 then
+                            local pct=hum.Health/hum.MaxHealth
+                            e.hbg.Visible=true;e.hbg.Position=Vector2.new(tl.X-7,tl.Y);e.hbg.Size=Vector2.new(3,h)
+                            e.hfill.Visible=true;e.hfill.Position=Vector2.new(tl.X-7,tl.Y+h*(1-pct));e.hfill.Size=Vector2.new(3,h*pct)
+                            e.hfill.Color=pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80))
+                        else e.hbg.Visible=false;e.hfill.Visible=false end
+                    else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end
+                else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end
+            else e.box.Visible=false;e.name.Visible=false;e.dist.Visible=false;e.id.Visible=false;e.hbg.Visible=false;e.hfill.Visible=false end
+        end
+        local tr=espTracers[player]
+        if tr then
+            tr.Thickness=_G.TracerThick
+            if _G.ShowTracer and show then local sp,onSc=Camera:WorldToViewportPoint(hrp.Position);if onSc then tr.Visible=true;tr.From=Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y);tr.To=Vector2.new(sp.X,sp.Y);tr.Color=col else tr.Visible=false end else tr.Visible=false end
+        end
+    end
+end
 local function onChar(p) if _G.ESP then task.wait(1);buildESP(p) end end
 Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() onChar(p) end);if p.Character then onChar(p) end;p.CharacterRemoving:Connect(function() clearESPPlayer(p) end) end)
 for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer then p.CharacterAdded:Connect(function() onChar(p) end);if p.Character then onChar(p) end;p.CharacterRemoving:Connect(function() clearESPPlayer(p) end) end end
@@ -747,7 +946,7 @@ local function freezePlayer(p,freeze) if not p.Character then return end;local r
 local function stopSpectating() local c=LocalPlayer.Character;Camera.CameraSubject=(c and c:FindFirstChildOfClass("Humanoid")) or LocalPlayer end
 local function giveItem(pN,tN,count) count=count or 1;local tp;for _,p in ipairs(Players:GetPlayers()) do if p.Name:lower():find(pN:lower()) then tp=p;break end end;if not tp then return false,"Oyuncu bulunamadı" end;local found;for _,loc in ipairs({ServerStorage,ReplicatedStorage,Workspace}) do local t=loc:FindFirstChild(tN,true);if t and t:IsA("Tool") then found=t:Clone();break end end;if not found then return false,"Eşya bulunamadı" end;for i=1,count do local cl=found:Clone();local bp=tp:FindFirstChild("Backpack");if bp then cl.Parent=bp elseif tp.Character then cl.Parent=tp.Character end;task.wait(0.1) end;return true,count.."x "..tN.." → "..tp.Name end
 
--- ========== CONFIG HELPERS ==========
+-- ========== CONFIG ==========
 local function buildConfigData()
     return {
         ESP=_G.ESP,ESPBox3D=_G.ESPBox3D,ESPBox2D=_G.ESPBox2D,ShowNames=_G.ShowNames,ShowDistance=_G.ShowDistance,ShowHealthBar=_G.ShowHealthBar,ShowID=_G.ShowID,ShowTracer=_G.ShowTracer,TracerThick=_G.TracerThick,TeamCheck=_G.TeamCheck,ShowFriendly=_G.ShowFriendly,WallCheck=_G.WallCheck,SkeletonESP=_G.SkeletonESP,
@@ -760,24 +959,10 @@ local function buildConfigData()
         savedBy=USERNAME,savedAt=os.time(),
     }
 end
-local function applyConfigData(data)
-    for k,v in pairs(data) do if k~="savedBy" and k~="savedAt" then _G[k]=v end end
-end
-
--- Gist ID'lerini local dosyada tut (isim → gist_id eşlemesi)
-local GIST_MAP_FILE = "susano_gists.json"
-local function loadGistMap()
-    local ok,content=safeRead(GIST_MAP_FILE)
-    if ok and content and content~="" then
-        local ok2,data=pcall(function() return HttpService:JSONDecode(content) end)
-        if ok2 and data then return data end
-    end
-    return {}
-end
-local function saveGistMap(map)
-    local ok,json=pcall(function() return HttpService:JSONEncode(map) end)
-    if ok then safeWrite(GIST_MAP_FILE,json) end
-end
+local function applyConfigData(data) for k,v in pairs(data) do if k~="savedBy" and k~="savedAt" then _G[k]=v end end end
+local GIST_MAP_FILE="susano_gists.json"
+local function loadGistMap() local ok,content=safeRead(GIST_MAP_FILE);if ok and content and content~="" then local ok2,data=pcall(function() return HttpService:JSONDecode(content) end);if ok2 and data then return data end end;return {} end
+local function saveGistMap(map) local ok,json=pcall(function() return HttpService:JSONEncode(map) end);if ok then safeWrite(GIST_MAP_FILE,json) end end
 
 -- ========== UI BUILDERS ==========
 local function buildToggle(parent,label,setting,yPos,onToggle)
@@ -787,7 +972,12 @@ local function buildToggle(parent,label,setting,yPos,onToggle)
     local pillW,pillH=50,24;local pill=Instance.new("Frame",row);pill.Size=UDim2.new(0,pillW,0,pillH);pill.Position=UDim2.new(1,-pillW-12,0.5,-pillH/2);pill.BackgroundColor3=_G[setting] and T.OnBG or T.OffBG;corner(pillH,pill)
     local knob=Instance.new("Frame",pill);knob.Size=UDim2.new(0,pillH-6,0,pillH-6);knob.Position=UDim2.new(_G[setting] and 1 or 0,_G[setting] and -(pillH-3) or 3,0.5,-(pillH-6)/2);knob.BackgroundColor3=_G[setting] and T.TitleBar or T.AccentDim;corner(100,knob)
     local hit=Instance.new("TextButton",row);hit.Size=UDim2.new(1,0,1,0);hit.BackgroundTransparency=1;hit.Text=""
-    hit.MouseButton1Click:Connect(function() _G[setting]=not _G[setting];tw(pill,0.18,{BackgroundColor3=_G[setting] and T.OnBG or T.OffBG});tw(knob,0.18,{Position=UDim2.new(_G[setting] and 1 or 0,_G[setting] and -(pillH-3) or 3,0.5,-(pillH-6)/2),BackgroundColor3=_G[setting] and T.TitleBar or T.AccentDim});if onToggle then onToggle(_G[setting]) end end)
+    hit.MouseButton1Click:Connect(function()
+        _G[setting]=not _G[setting]
+        tw(pill,0.18,{BackgroundColor3=_G[setting] and T.OnBG or T.OffBG})
+        tw(knob,0.18,{Position=UDim2.new(_G[setting] and 1 or 0,_G[setting] and -(pillH-3) or 3,0.5,-(pillH-6)/2),BackgroundColor3=_G[setting] and T.TitleBar or T.AccentDim})
+        if onToggle then onToggle(_G[setting]) end
+    end)
     return yPos+52
 end
 local function buildSlider(parent,label,setting,yPos,minV,maxV,fmt,onChange)
@@ -797,8 +987,11 @@ local function buildSlider(parent,label,setting,yPos,minV,maxV,fmt,onChange)
     local valL=Instance.new("TextLabel",row);valL.Size=UDim2.new(0.35,0,0,22);valL.Position=UDim2.new(0.65,0,0,6);valL.BackgroundTransparency=1;valL.Text=fv(_G[setting]);valL.TextColor3=T.TextDim;valL.Font=Enum.Font.GothamMedium;valL.TextSize=12;valL.TextXAlignment=Enum.TextXAlignment.Right
     local track=Instance.new("Frame",row);track.Size=UDim2.new(1,-24,0,3);track.Position=UDim2.new(0,12,1,-14);track.BackgroundColor3=T.AccentFaint;corner(3,track)
     local fill=Instance.new("Frame",track);fill.Size=UDim2.new((_G[setting]-minV)/(maxV-minV),0,1,0);fill.BackgroundColor3=T.Accent;corner(3,fill)
-    local dragging=false;local function setVal(ix) local relX=math.clamp(ix-track.AbsolutePosition.X,0,track.AbsoluteSize.X);local pct=relX/track.AbsoluteSize.X;_G[setting]=math.floor((minV+pct*(maxV-minV))*100)/100;fill.Size=UDim2.new(pct,0,1,0);valL.Text=fv(_G[setting]);if onChange then onChange(_G[setting]) end end
-    track.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true;setVal(i.Position.X) end end);track.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end);UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then setVal(i.Position.X) end end)
+    local dragging=false
+    local function setVal(ix) local relX=math.clamp(ix-track.AbsolutePosition.X,0,track.AbsoluteSize.X);local pct=relX/track.AbsoluteSize.X;_G[setting]=math.floor((minV+pct*(maxV-minV))*100)/100;fill.Size=UDim2.new(pct,0,1,0);valL.Text=fv(_G[setting]);if onChange then onChange(_G[setting]) end end
+    track.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true;setVal(i.Position.X) end end)
+    track.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+    UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then setVal(i.Position.X) end end)
     return yPos+62
 end
 local function buildSection(parent,txt,yPos)
@@ -814,7 +1007,8 @@ end
 local function buildButton(parent,label,yPos,bgCol,txtCol)
     local c=bgCol or T.Accent;local tc=txtCol or T.BG
     local btn=Instance.new("TextButton",parent);btn.Size=UDim2.new(1,-28,0,38);btn.Position=UDim2.new(0,14,0,yPos);btn.BackgroundColor3=c;btn.TextColor3=tc;btn.Font=Enum.Font.GothamBold;btn.TextSize=14;btn.Text=label;corner(8,btn)
-    btn.MouseEnter:Connect(function() tw(btn,0.1,{BackgroundColor3=c:Lerp(Color3.new(1,1,1),0.1)}) end);btn.MouseLeave:Connect(function() tw(btn,0.1,{BackgroundColor3=c}) end)
+    btn.MouseEnter:Connect(function() tw(btn,0.1,{BackgroundColor3=c:Lerp(Color3.new(1,1,1),0.1)}) end)
+    btn.MouseLeave:Connect(function() tw(btn,0.1,{BackgroundColor3=c}) end)
     return btn,yPos+46
 end
 local function buildDropdown(parent,label,options,getter,setter,yPos)
@@ -832,7 +1026,7 @@ local function buildColorPreview(parent,sR,sG,sB,yPos)
     return yPos+44
 end
 
--- ========== TAB BUILDERS ==========
+-- ========== TABS ==========
 local tabBuilders={}
 
 tabBuilders["ESP"]=function(p)
@@ -842,7 +1036,7 @@ tabBuilders["ESP"]=function(p)
     y=buildSection(sc,"Filtreler",y+4);y=buildToggle(sc,"Düşmanları Göster","TeamCheck",y);y=buildToggle(sc,"Takım Arkadaşları","ShowFriendly",y);y=buildToggle(sc,"Duvar Kontrolü","WallCheck",y)
     y=buildSection(sc,"Düşman Rengi",y+4);y=buildColorPreview(sc,"ESPEnemyR","ESPEnemyG","ESPEnemyB",y);y=buildSlider(sc,"Kırmızı","ESPEnemyR",y,0,255,nil);y=buildSlider(sc,"Yeşil","ESPEnemyG",y,0,255,nil);y=buildSlider(sc,"Mavi","ESPEnemyB",y,0,255,nil)
     y=buildSection(sc,"Dost Rengi",y+4);y=buildColorPreview(sc,"ESPFriendR","ESPFriendG","ESPFriendB",y);y=buildSlider(sc,"Kırmızı","ESPFriendR",y,0,255,nil);y=buildSlider(sc,"Yeşil","ESPFriendG",y,0,255,nil);y=buildSlider(sc,"Mavi","ESPFriendB",y,0,255,nil)
-    y=buildSection(sc,"Görünür Renk (Duvar)",y+4);y=buildColorPreview(sc,"ESPVisR","ESPVisG","ESPVisB",y);y=buildSlider(sc,"Kırmızı","ESPVisR",y,0,255,nil);y=buildSlider(sc,"Yeşil","ESPVisG",y,0,255,nil);y=buildSlider(sc,"Mavi","ESPVisB",y,0,255,nil)
+    y=buildSection(sc,"Görünür Renk",y+4);y=buildColorPreview(sc,"ESPVisR","ESPVisG","ESPVisB",y);y=buildSlider(sc,"Kırmızı","ESPVisR",y,0,255,nil);y=buildSlider(sc,"Yeşil","ESPVisG",y,0,255,nil);y=buildSlider(sc,"Mavi","ESPVisB",y,0,255,nil)
     y=buildSection(sc,"Nişangah",y+4);y=buildToggle(sc,"Nişangah","Crosshair",y,function() buildCrosshair() end)
     y=buildDropdown(sc,"Stil",CROSSHAIR_STYLES,function() return _G.CrosshairStyle end,function(v) _G.CrosshairStyle=v;buildCrosshair() end,y)
     y=buildSlider(sc,"Boyut","CrosshairSize",y,4,50,nil,function() buildCrosshair() end);y=buildSlider(sc,"Kalınlık","CrosshairThick",y,1,8,nil,function() buildCrosshair() end);y=buildSlider(sc,"Boşluk","CrosshairGap",y,0,24,nil,function() buildCrosshair() end);y=buildSlider(sc,"Opaklık","CrosshairAlpha",y,0.1,1.0,"%.1f",function() buildCrosshair() end)
@@ -853,20 +1047,20 @@ end
 tabBuilders["AIMBOT"]=function(p)
     local sc=makeScroll(p);local y=10
     y=buildSection(sc,"Aimbot",y);y=buildToggle(sc,"Aimbot","Aimbot",y);y=buildToggle(sc,"Rage Aimbot","RageAimbot",y,function(v) if v then enableRageAimbot() else disableRageAimbot() end end)
-    y=buildSection(sc,"Silent Aim",y+4);y=buildToggle(sc,"Silent Aim (Xeno Uyumlu)","SilentAim",y,function(v) if v then enableSilentAim() else disableSilentAim() end end)
+    y=buildSection(sc,"Silent Aim",y+4);y=buildToggle(sc,"Silent Aim","SilentAim",y,function(v) if v then enableSilentAim() else disableSilentAim() end end)
     y=buildSection(sc,"Otomatik Ateş",y+4);y=buildToggle(sc,"Auto Shoot","AutoShoot",y)
     y=buildSection(sc,"FOV",y+4);y=buildToggle(sc,"FOV Filtresi","UseFOV",y);y=buildToggle(sc,"FOV Dairesi","FOVVisible",y,function(v) if FOVCircle then FOVCircle.Visible=v end end);y=buildSlider(sc,"FOV Çapı","FOVSize",y,20,400,nil)
-    y=buildSection(sc,"Yumuşaklık",y+4);y=buildSlider(sc,"Yumuşaklık (düşük=hızlı)","AimbotSmoothness",y,0.02,1.0,"%.2f")
-    y=buildSection(sc,"Hedef Bölge",y+4);y=buildToggle(sc,"Kafa","AimbotPartHead",y);y=buildToggle(sc,"Göğüs","AimbotPartChest",y);y=buildToggle(sc,"Karın","AimbotPartStomach",y)
+    y=buildSection(sc,"Yumuşaklık",y+4);y=buildSlider(sc,"Yumuşaklık","AimbotSmoothness",y,0.02,1.0,"%.2f")
+    y=buildSection(sc,"Hedef",y+4);y=buildToggle(sc,"Kafa","AimbotPartHead",y);y=buildToggle(sc,"Göğüs","AimbotPartChest",y);y=buildToggle(sc,"Karın","AimbotPartStomach",y)
 end
 
 tabBuilders["OTHER"]=function(p)
     local sc=makeScroll(p);local y=10
     y=buildSection(sc,"Uçuş",y);y=buildToggle(sc,"Uç","FlyEnabled",y,function(v) if v then enableFly() else disableFly() end end);y=buildSlider(sc,"Uçuş Hızı","FlySpeed",y,10,300,nil)
-    y=buildSection(sc,"Hareket",y+4);y=buildToggle(sc,"Noclip","NoClipEnabled",y,function(v) if v then enableNoclip() else disableNoclip() end end);y=buildToggle(sc,"Sonsuz Zıplama","InfiniteJump",y,function(v) if v then enableInfiniteJump() else disableInfiniteJump() end end);y=buildToggle(sc,"Uzun Atlama (Space)","LongJump",y,function(v) if v then enableLongJump() else disableLongJump() end end);y=buildSlider(sc,"Atlama Gücü","LongJumpPower",y,20,200,nil);y=buildToggle(sc,"Yüzme Hack","SwimHack",y)
+    y=buildSection(sc,"Hareket",y+4);y=buildToggle(sc,"Noclip","NoClipEnabled",y,function(v) if v then enableNoclip() else disableNoclip() end end);y=buildToggle(sc,"Sonsuz Zıplama","InfiniteJump",y,function(v) if v then enableInfiniteJump() else disableInfiniteJump() end end);y=buildToggle(sc,"Uzun Atlama","LongJump",y,function(v) if v then enableLongJump() else disableLongJump() end end);y=buildSlider(sc,"Atlama Gücü","LongJumpPower",y,20,200,nil);y=buildToggle(sc,"Yüzme Hack","SwimHack",y)
     y=buildSection(sc,"Bunny Hop",y+4);y=buildToggle(sc,"Bunny Hop","BunnyHop",y,function(v) if v then enableBhop() else disableBhop() end end);y=buildSlider(sc,"Hız","BunnyHopSpeed",y,1.0,3.0,"%.1f")
     y=buildSection(sc,"Hız",y+4);y=buildToggle(sc,"Hız Hack","SpeedHack",y,function(v) if v then enableSpeed() else disableSpeed() end end);y=buildSlider(sc,"Çarpan","SpeedMultiplier",y,1.0,10.0,"%.1f")
-    y=buildSection(sc,"Diğer",y+4);y=buildToggle(sc,"Stream Proof (OBS Bypass)","StreamProof",y,function(v) if MainGui then MainGui.DisplayOrder=v and 200 or 10 end end)
+    y=buildSection(sc,"Diğer",y+4);y=buildToggle(sc,"Stream Proof","StreamProof",y,function(v) if MainGui then MainGui.DisplayOrder=v and 200 or 10 end end)
 end
 
 tabBuilders["PLAYERS"]=function(p)
@@ -878,16 +1072,35 @@ tabBuilders["PLAYERS"]=function(p)
     y=buildSection(sc,"Oyuncu Listesi",y+4);local stopBtn,_=buildButton(sc,"İzlemeyi Durdur",y,T.AccentFaint,T.Text);y=y+46;stopBtn.MouseButton1Click:Connect(stopSpectating)
     local plist=Instance.new("ScrollingFrame",sc);plist.Size=UDim2.new(1,-28,0,260);plist.Position=UDim2.new(0,14,0,y);plist.BackgroundColor3=T.Card;corner(8,plist);plist.ScrollBarThickness=3;plist.ScrollBarImageColor3=T.BorderLight;plist.CanvasSize=UDim2.new(0,0,0,0);plist.AutomaticCanvasSize=Enum.AutomaticSize.Y;plist.BorderSizePixel=0
     local pl=Instance.new("UIListLayout",plist);pl.Padding=UDim.new(0,4);local pp=Instance.new("UIPadding",plist);pp.PaddingTop=UDim.new(0,6);pp.PaddingLeft=UDim.new(0,6);pp.PaddingRight=UDim.new(0,6)
-    local function refreshPL() for _,c in ipairs(plist:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end;for _,plr in ipairs(Players:GetPlayers()) do if plr==LocalPlayer then continue end;local row=Instance.new("Frame",plist);row.Size=UDim2.new(1,0,0,40);row.BackgroundColor3=T.CardHov;corner(6,row);local nl=Instance.new("TextLabel",row);nl.Size=UDim2.new(0.42,0,1,0);nl.Position=UDim2.new(0,8,0,0);nl.BackgroundTransparency=1;nl.Text=plr.Name;nl.TextColor3=T.Text;nl.Font=Enum.Font.GothamSemibold;nl.TextSize=13;nl.TextXAlignment=Enum.TextXAlignment.Left;local defs={{l="TP",c=Color3.fromRGB(55,55,180),x=0.43},{l="PULL",c=Color3.fromRGB(160,90,0),x=0.57},{l="SPEC",c=Color3.fromRGB(75,75,160),x=0.72},{l="FRZ",c=Color3.fromRGB(0,130,130),x=0.87}};local btns={};for _,bd in ipairs(defs) do local b=Instance.new("TextButton",row);b.Size=UDim2.new(0,42,0,28);b.Position=UDim2.new(bd.x,0,0.5,-14);b.BackgroundColor3=bd.c;b.TextColor3=Color3.new(1,1,1);b.Font=Enum.Font.GothamBold;b.TextSize=11;b.Text=bd.l;corner(5,b);btns[bd.l]=b end;btns["TP"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame=plr.Character.HumanoidRootPart.CFrame+Vector3.new(0,3,0) end end);btns["PULL"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then plr.Character.HumanoidRootPart.CFrame=LocalPlayer.Character.HumanoidRootPart.CFrame+Vector3.new(0,3,0) end end);btns["SPEC"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("Humanoid") then Camera.CameraSubject=plr.Character.Humanoid end end);local frozen=false;btns["FRZ"].MouseButton1Click:Connect(function() frozen=not frozen;freezePlayer(plr,frozen);btns["FRZ"].Text=frozen and "FREE" or "FRZ";btns["FRZ"].BackgroundColor3=frozen and Color3.fromRGB(0,180,90) or Color3.fromRGB(0,130,130) end) end end
+    local function refreshPL()
+        for _,c in ipairs(plist:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr==LocalPlayer then continue end
+            local row=Instance.new("Frame",plist);row.Size=UDim2.new(1,0,0,40);row.BackgroundColor3=T.CardHov;corner(6,row)
+            local nl=Instance.new("TextLabel",row);nl.Size=UDim2.new(0.42,0,1,0);nl.Position=UDim2.new(0,8,0,0);nl.BackgroundTransparency=1;nl.Text=plr.Name;nl.TextColor3=T.Text;nl.Font=Enum.Font.GothamSemibold;nl.TextSize=13;nl.TextXAlignment=Enum.TextXAlignment.Left
+            local defs={{l="TP",c=Color3.fromRGB(55,55,180),x=0.43},{l="PULL",c=Color3.fromRGB(160,90,0),x=0.57},{l="SPEC",c=Color3.fromRGB(75,75,160),x=0.72},{l="FRZ",c=Color3.fromRGB(0,130,130),x=0.87}}
+            local btns={}
+            for _,bd in ipairs(defs) do local b=Instance.new("TextButton",row);b.Size=UDim2.new(0,42,0,28);b.Position=UDim2.new(bd.x,0,0.5,-14);b.BackgroundColor3=bd.c;b.TextColor3=Color3.new(1,1,1);b.Font=Enum.Font.GothamBold;b.TextSize=11;b.Text=bd.l;corner(5,b);btns[bd.l]=b end
+            btns["TP"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame=plr.Character.HumanoidRootPart.CFrame+Vector3.new(0,3,0) end end)
+            btns["PULL"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then plr.Character.HumanoidRootPart.CFrame=LocalPlayer.Character.HumanoidRootPart.CFrame+Vector3.new(0,3,0) end end)
+            btns["SPEC"].MouseButton1Click:Connect(function() if plr.Character and plr.Character:FindFirstChild("Humanoid") then Camera.CameraSubject=plr.Character.Humanoid end end)
+            local frozen=false;btns["FRZ"].MouseButton1Click:Connect(function() frozen=not frozen;freezePlayer(plr,frozen);btns["FRZ"].Text=frozen and "FREE" or "FRZ";btns["FRZ"].BackgroundColor3=frozen and Color3.fromRGB(0,180,90) or Color3.fromRGB(0,130,130) end)
+        end
+    end
     refreshPL();Players.PlayerAdded:Connect(refreshPL);Players.PlayerRemoving:Connect(function() task.wait(0.2);refreshPL() end)
 end
 
 tabBuilders["ITEM"]=function(p)
-    local sc=makeScroll(p);local y=10;y=buildSection(sc,"Eşya Ver",y);local pBox;pBox,y=buildInput(sc,"Kullanıcı","İsim","",y);local tBox;tBox,y=buildInput(sc,"Eşya","Sword, AK47","",y);local cBox;cBox,y=buildInput(sc,"Adet","1","1",y);local gBtn;gBtn,y=buildButton(sc,"Ver",y);local sBtn;sBtn,y=buildButton(sc,"Ara",y,T.AccentFaint,T.Text)
+    local sc=makeScroll(p);local y=10;y=buildSection(sc,"Eşya Ver",y)
+    local pBox;pBox,y=buildInput(sc,"Kullanıcı","İsim","",y);local tBox;tBox,y=buildInput(sc,"Eşya","Sword","",y);local cBox;cBox,y=buildInput(sc,"Adet","1","1",y)
+    local gBtn;gBtn,y=buildButton(sc,"Ver",y);local sBtn;sBtn,y=buildButton(sc,"Ara",y,T.AccentFaint,T.Text)
     local res=Instance.new("TextLabel",sc);res.Size=UDim2.new(1,-28,0,28);res.Position=UDim2.new(0,14,0,y);res.BackgroundTransparency=1;res.TextColor3=T.TextDim;res.Font=Enum.Font.GothamMedium;res.TextSize=13;res.TextWrapped=true;res.TextXAlignment=Enum.TextXAlignment.Left;y=y+34
-    local toolsF=Instance.new("Frame",sc);toolsF.Size=UDim2.new(1,-28,0,180);toolsF.Position=UDim2.new(0,14,0,y);toolsF.BackgroundColor3=T.Card;corner(8,toolsF);local tlbl=Instance.new("TextLabel",toolsF);tlbl.Size=UDim2.new(1,0,0,26);tlbl.BackgroundTransparency=1;tlbl.Text="Eşya Listesi";tlbl.TextColor3=T.TextDim;tlbl.Font=Enum.Font.GothamBold;tlbl.TextSize=11;local tsc=Instance.new("ScrollingFrame",toolsF);tsc.Size=UDim2.new(1,-8,1,-30);tsc.Position=UDim2.new(0,4,0,28);tsc.BackgroundTransparency=1;tsc.ScrollBarThickness=3;tsc.CanvasSize=UDim2.new(0,0,0,0);tsc.AutomaticCanvasSize=Enum.AutomaticSize.Y;tsc.BorderSizePixel=0;Instance.new("UIListLayout",tsc).Padding=UDim.new(0,3)
+    local toolsF=Instance.new("Frame",sc);toolsF.Size=UDim2.new(1,-28,0,180);toolsF.Position=UDim2.new(0,14,0,y);toolsF.BackgroundColor3=T.Card;corner(8,toolsF)
+    local tlbl=Instance.new("TextLabel",toolsF);tlbl.Size=UDim2.new(1,0,0,26);tlbl.BackgroundTransparency=1;tlbl.Text="Eşya Listesi";tlbl.TextColor3=T.TextDim;tlbl.Font=Enum.Font.GothamBold;tlbl.TextSize=11
+    local tsc=Instance.new("ScrollingFrame",toolsF);tsc.Size=UDim2.new(1,-8,1,-30);tsc.Position=UDim2.new(0,4,0,28);tsc.BackgroundTransparency=1;tsc.ScrollBarThickness=3;tsc.CanvasSize=UDim2.new(0,0,0,0);tsc.AutomaticCanvasSize=Enum.AutomaticSize.Y;tsc.BorderSizePixel=0;Instance.new("UIListLayout",tsc).Padding=UDim.new(0,3)
     local function rfr() for _,c in ipairs(tsc:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end;task.spawn(function() local found={};for _,loc in ipairs({ServerStorage,ReplicatedStorage,Workspace}) do for _,item in ipairs(loc:GetDescendants()) do if item:IsA("Tool") then found[item.Name]=true end end end;local cnt=0;for name in pairs(found) do local btn=Instance.new("TextButton",tsc);btn.Size=UDim2.new(1,0,0,26);btn.Text=name;btn.TextColor3=T.Text;btn.Font=Enum.Font.Gotham;btn.TextSize=13;btn.BackgroundColor3=T.CardHov;corner(5,btn);btn.MouseButton1Click:Connect(function() tBox.Text=name end);cnt=cnt+1 end;res.Text=cnt>0 and (cnt.." bulundu") or "Bulunamadı";res.TextColor3=cnt>0 and T.KeyGreen or T.KeyRed end) end
-    gBtn.MouseButton1Click:Connect(function() local ok,msg=giveItem(pBox.Text,tBox.Text,math.clamp(tonumber(cBox.Text) or 1,1,20));res.Text=msg;res.TextColor3=ok and T.KeyGreen or T.KeyRed end);sBtn.MouseButton1Click:Connect(rfr);rfr()
+    gBtn.MouseButton1Click:Connect(function() local ok,msg=giveItem(pBox.Text,tBox.Text,math.clamp(tonumber(cBox.Text) or 1,1,20));res.Text=msg;res.TextColor3=ok and T.KeyGreen or T.KeyRed end)
+    sBtn.MouseButton1Click:Connect(rfr);rfr()
 end
 
 tabBuilders["TEAM CHANGE"]=function(p)
@@ -898,100 +1111,65 @@ tabBuilders["TEAM CHANGE"]=function(p)
 end
 
 tabBuilders["VISUAL"]=function(p)
-    local sc=makeScroll(p);local y=10;y=buildSection(sc,"Aydınlatma",y);y=buildToggle(sc,"Full Bright","FullBright",y,function(v) applyFullBright(v) end);y=buildToggle(sc,"Sis Kaldır","NoFog",y,function(v) applyNoFog(v) end)
+    local sc=makeScroll(p);local y=10
+    y=buildSection(sc,"Aydınlatma",y);y=buildToggle(sc,"Full Bright","FullBright",y,function(v) applyFullBright(v) end);y=buildToggle(sc,"Sis Kaldır","NoFog",y,function(v) applyNoFog(v) end)
     y=buildSection(sc,"Kamera",y+4);y=buildToggle(sc,"FOV Değiştir","FOVChanger",y,function(v) if not v then Camera.FieldOfView=origCamFOV end end);y=buildSlider(sc,"FOV Değeri","FOVChangerVal",y,50,200,nil,function(v) if _G.FOVChanger then Camera.FieldOfView=v end end)
     y=buildToggle(sc,"3. Şahıs Kamera","ThirdPerson",y,function(v) if v then enableThirdPerson() else disableThirdPerson() end end);y=buildSlider(sc,"Mesafe","ThirdPersonDist",y,4,30,nil)
     y=buildSection(sc,"Dünya",y+4);y=buildToggle(sc,"Saat Değiştir","TimeChanger",y,function(v) applyTime(v) end);y=buildSlider(sc,"Saat (0-23)","TimeOfDay",y,0,23,nil,function(v) if _G.TimeChanger then applyTime(true) end end)
-    y=buildSection(sc,"Dünya Rengi",y+4);y=buildToggle(sc,"Renk Değiştir","WorldColor",y,function(v) applyWorldColor(v) end);y=buildColorPreview(sc,"WorldR","WorldG","WorldB",y);y=buildSlider(sc,"Kırmızı","WorldR",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end);y=buildSlider(sc,"Yeşil","WorldG",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end);y=buildSlider(sc,"Mavi","WorldB",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end)
+    y=buildSection(sc,"Dünya Rengi",y+4);y=buildToggle(sc,"Renk Değiştir","WorldColor",y,function(v) applyWorldColor(v) end);y=buildColorPreview(sc,"WorldR","WorldG","WorldB",y)
+    y=buildSlider(sc,"Kırmızı","WorldR",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end)
+    y=buildSlider(sc,"Yeşil","WorldG",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end)
+    y=buildSlider(sc,"Mavi","WorldB",y,0,255,nil,function() if _G.WorldColor then applyWorldColor(true) end end)
 end
 
--- ========== CONFIG TAB ==========
 tabBuilders["CONFIG"]=function(p)
     local sc=makeScroll(p);local y=10
-
-    -- Açıklama kartı
-    local infoCard=Instance.new("Frame",sc);infoCard.Size=UDim2.new(1,-28,0,50);infoCard.Position=UDim2.new(0,14,0,y);infoCard.BackgroundColor3=T.AccentFaint;corner(8,infoCard)
-    local iL=Instance.new("TextLabel",infoCard);iL.Size=UDim2.new(1,-16,1,0);iL.Position=UDim2.new(0,8,0,0);iL.BackgroundTransparency=1;iL.Text="Config kaydet → Gist ID al → Paylaş\nBaşkası bu ID'yi girerek configini yükler";iL.TextColor3=T.TextDim;iL.Font=Enum.Font.Gotham;iL.TextSize=12;iL.TextWrapped=true;iL.TextXAlignment=Enum.TextXAlignment.Left;y=y+58
-
+    local infoCard=Instance.new("Frame",sc);infoCard.Size=UDim2.new(1,-28,0,44);infoCard.Position=UDim2.new(0,14,0,y);infoCard.BackgroundColor3=T.AccentFaint;corner(8,infoCard)
+    local iL=Instance.new("TextLabel",infoCard);iL.Size=UDim2.new(1,-16,1,0);iL.Position=UDim2.new(0,8,0,0);iL.BackgroundTransparency=1;iL.Text="Config kaydet → Gist ID al → Paylaş\nBaşkası bu ID'yi girerek configini yükler";iL.TextColor3=T.TextDim;iL.Font=Enum.Font.Gotham;iL.TextSize=12;iL.TextWrapped=true;iL.TextXAlignment=Enum.TextXAlignment.Left;y=y+52
     y=buildSection(sc,"Config Kaydet",y)
     local nameBox;nameBox,y=buildInput(sc,"Config Adı","benim-config","",y)
-    local saveBtn;saveBtn,y=buildButton(sc,"GitHub Gist'e Kaydet",y,T.KeyGreen,Color3.new(1,1,1))
-    local res=Instance.new("TextLabel",sc);res.Size=UDim2.new(1,-28,0,36);res.Position=UDim2.new(0,14,0,y);res.BackgroundTransparency=1;res.Font=Enum.Font.GothamMedium;res.TextSize=13;res.TextXAlignment=Enum.TextXAlignment.Left;res.TextWrapped=true;y=y+44
-
+    local saveBtn;saveBtn,y=buildButton(sc,"Gist'e Kaydet",y,T.KeyGreen,Color3.new(1,1,1))
+    local res=Instance.new("TextLabel",sc);res.Size=UDim2.new(1,-28,0,36);res.Position=UDim2.new(0,14,0,y);res.BackgroundTransparency=1;res.Font=Enum.Font.GothamMedium;res.TextSize=12;res.TextXAlignment=Enum.TextXAlignment.Left;res.TextWrapped=true;y=y+44
     saveBtn.MouseButton1Click:Connect(function()
         local n=nameBox.Text:gsub("[^%w%-_]",""):lower()
         if n=="" then res.Text="Config adı gir!";res.TextColor3=T.KeyRed;return end
-        saveBtn.Text="Kaydediliyor...";res.Text="GitHub Gist'e yükleniyor…";res.TextColor3=T.TextDim
-        local cfgData=buildConfigData()
-        local ok2,json=pcall(function() return HttpService:JSONEncode(cfgData) end)
+        saveBtn.Text="Kaydediliyor...";res.Text="Gist'e yükleniyor…";res.TextColor3=T.TextDim
+        local ok2,json=pcall(function() return HttpService:JSONEncode(buildConfigData()) end)
         if not ok2 then res.Text="JSON hatası";res.TextColor3=T.KeyRed;saveBtn.Text="Kaydet";return end
         local ok,gistId=gistCreate(n,json)
-        saveBtn.Text="GitHub Gist'e Kaydet"
+        saveBtn.Text="Gist'e Kaydet"
         if ok then
-            -- Gist ID'yi local'e kaydet
             local gmap=loadGistMap();gmap[n]=gistId;saveGistMap(gmap)
-            res.Text="✓ Kaydedildi!\nPaylaşım kodu: "..gistId
-            res.TextColor3=T.KeyGreen
-        else
-            res.Text="Kayıt başarısız. Token'ı kontrol et."
-            res.TextColor3=T.KeyRed
-        end
+            res.Text="Kaydedildi! Kod:\n"..gistId;res.TextColor3=T.KeyGreen
+        else res.Text="Kayıt başarısız.";res.TextColor3=T.KeyRed end
     end)
-
-    y=buildSection(sc,"Config Yükle / Paylaş",y+4)
-
-    local codeBox;codeBox,y=buildInput(sc,"Gist ID (Paylaşım Kodu)","abc123def456...","",y)
+    y=buildSection(sc,"Config Yükle",y+4)
+    local codeBox;codeBox,y=buildInput(sc,"Gist ID","abc123...","",y)
     local loadBtn;loadBtn,y=buildButton(sc,"Gist ID ile Yükle",y,Color3.fromRGB(40,100,200),Color3.new(1,1,1))
     local loadRes=Instance.new("TextLabel",sc);loadRes.Size=UDim2.new(1,-28,0,28);loadRes.Position=UDim2.new(0,14,0,y);loadRes.BackgroundTransparency=1;loadRes.Font=Enum.Font.GothamMedium;loadRes.TextSize=13;loadRes.TextXAlignment=Enum.TextXAlignment.Left;y=y+36
-
     loadBtn.MouseButton1Click:Connect(function()
         local gistId=codeBox.Text:gsub("%s+","")
         if gistId=="" then loadRes.Text="Gist ID gir!";loadRes.TextColor3=T.KeyRed;return end
-        loadBtn.Text="Yükleniyor...";loadRes.Text="GitHub'dan çekiliyor…";loadRes.TextColor3=T.TextDim
+        loadBtn.Text="Yükleniyor...";loadRes.Text="Çekiliyor…";loadRes.TextColor3=T.TextDim
         local ok,data=gistRead(gistId)
-        loadBtn.Text="Gist ID ile Yükle"
+        loadBtn.Text="Yükle"
         if ok and data then
             applyConfigData(data);buildCrosshair()
-            loadRes.Text="✓ Config yüklendi!"
-            if data.savedBy then loadRes.Text=loadRes.Text.."  ("..data.savedBy.." tarafından kaydedildi)" end
+            loadRes.Text="Config yüklendi!"..(data.savedBy and (" ("..data.savedBy..")") or "")
             loadRes.TextColor3=T.KeyGreen
-        else
-            loadRes.Text="Yükleme başarısız. ID'yi kontrol et."
-            loadRes.TextColor3=T.KeyRed
-        end
+        else loadRes.Text="Yükleme başarısız.";loadRes.TextColor3=T.KeyRed end
     end)
-
-    -- Kayıtlı Gist'ler
     y=buildSection(sc,"Kayıtlı Configler",y+4)
-    local gmap=loadGistMap()
-    local hasConfig=false
+    local gmap=loadGistMap();local hasConfig=false
     for cfgName,gistId in pairs(gmap) do
         hasConfig=true
         local row=Instance.new("Frame",sc);row.Size=UDim2.new(1,-28,0,48);row.Position=UDim2.new(0,14,0,y);row.BackgroundColor3=T.Card;corner(8,row)
-        local nl=Instance.new("TextLabel",row);nl.Size=UDim2.new(1,-220,1,0);nl.Position=UDim2.new(0,12,0,0);nl.BackgroundTransparency=1;nl.Text=cfgName;nl.TextColor3=T.Text;nl.Font=Enum.Font.GothamSemibold;nl.TextSize=13;nl.TextXAlignment=Enum.TextXAlignment.Left
-        local idLbl=Instance.new("TextLabel",row);idLbl.Size=UDim2.new(1,-220,0,16);idLbl.Position=UDim2.new(0,12,1,-20);idLbl.BackgroundTransparency=1;idLbl.Text=gistId:sub(1,20).."…";idLbl.TextColor3=T.TextFaint;idLbl.Font=Enum.Font.Gotham;idLbl.TextSize=10;idLbl.TextXAlignment=Enum.TextXAlignment.Left
-        local function mkB(txt,col,xOff) local b=Instance.new("TextButton",row);b.Size=UDim2.new(0,56,0,28);b.Position=UDim2.new(1,xOff,0.5,-14);b.BackgroundColor3=col;b.TextColor3=Color3.new(1,1,1);b.Font=Enum.Font.GothamBold;b.TextSize=11;b.Text=txt;corner(6,b);return b end
-        local loadBt=mkB("Yükle",T.KeyGreen,-184)
-        local copyBt=mkB("ID Kopyala",T.AccentFaint,-120)  -- sadece res'e yazar
-        local delBt =mkB("Sil",T.KeyRed,-4)
-        loadBt.MouseButton1Click:Connect(function()
-            loadBt.Text="…"
-            local ok,data=gistRead(gistId)
-            loadBt.Text="Yükle"
-            if ok and data then applyConfigData(data);buildCrosshair();res.Text="✓ Yüklendi: "..cfgName;res.TextColor3=T.KeyGreen
-            else res.Text="Yüklenemedi";res.TextColor3=T.KeyRed end
-        end)
-        copyBt.MouseButton1Click:Connect(function()
-            res.Text="ID: "..gistId;res.TextColor3=T.TextDim
-        end)
-        delBt.MouseButton1Click:Connect(function()
-            -- Gist'i sil
-            task.spawn(function() gistDelete(gistId) end)
-            -- Local map'ten çıkar
-            gmap[cfgName]=nil;saveGistMap(gmap)
-            res.Text="Silindi: "..cfgName;res.TextColor3=T.KeyRed
-            task.wait(0.3);switchTab("CONFIG")
-        end)
+        local nl=Instance.new("TextLabel",row);nl.Size=UDim2.new(1,-210,1,0);nl.Position=UDim2.new(0,12,0,0);nl.BackgroundTransparency=1;nl.Text=cfgName;nl.TextColor3=T.Text;nl.Font=Enum.Font.GothamSemibold;nl.TextSize=13;nl.TextXAlignment=Enum.TextXAlignment.Left
+        local function mkB(txt,col,xOff) local b=Instance.new("TextButton",row);b.Size=UDim2.new(0,54,0,28);b.Position=UDim2.new(1,xOff,0.5,-14);b.BackgroundColor3=col;b.TextColor3=Color3.new(1,1,1);b.Font=Enum.Font.GothamBold;b.TextSize=11;b.Text=txt;corner(6,b);return b end
+        local loadBt=mkB("Yükle",T.KeyGreen,-176);local copyBt=mkB("Kod",T.AccentFaint,-114);local delBt=mkB("Sil",T.KeyRed,-52)
+        loadBt.MouseButton1Click:Connect(function() loadBt.Text="…";local ok,data=gistRead(gistId);loadBt.Text="Yükle";if ok and data then applyConfigData(data);buildCrosshair();res.Text="Yüklendi: "..cfgName;res.TextColor3=T.KeyGreen else res.Text="Yüklenemedi";res.TextColor3=T.KeyRed end end)
+        copyBt.MouseButton1Click:Connect(function() res.Text="ID: "..gistId;res.TextColor3=T.TextDim end)
+        delBt.MouseButton1Click:Connect(function() task.spawn(function() gistDelete(gistId) end);gmap[cfgName]=nil;saveGistMap(gmap);res.Text="Silindi: "..cfgName;res.TextColor3=T.KeyRed;task.wait(0.3);switchTab("CONFIG") end)
         y=y+56
     end
     if not hasConfig then
@@ -1003,17 +1181,15 @@ tabBuilders["ABOUT"]=function(p)
     local sc=makeScroll(p)
     local lF=Instance.new("Frame",sc);lF.Size=UDim2.new(1,-28,0,80);lF.Position=UDim2.new(0,14,0,10);lF.BackgroundColor3=T.Card;corner(10,lF)
     local ll=Instance.new("TextLabel",lF);ll.Size=UDim2.new(1,0,0.6,0);ll.BackgroundTransparency=1;ll.Text="SUSANO";ll.TextColor3=T.Text;ll.Font=Enum.Font.GothamBlack;ll.TextSize=38
-    local vl=Instance.new("TextLabel",lF);vl.Size=UDim2.new(1,0,0.4,0);vl.Position=UDim2.new(0,0,0.6,0);vl.BackgroundTransparency=1;vl.Text="Version 1.0  |  Key: "..keyType:upper().."  |  "..USERNAME;vl.TextColor3=T.TextDim;vl.Font=Enum.Font.GothamMedium;vl.TextSize=12
+    local vl=Instance.new("TextLabel",lF);vl.Size=UDim2.new(1,0,0.4,0);vl.Position=UDim2.new(0,0,0.6,0);vl.BackgroundTransparency=1;vl.Text="Version 1.0  |  "..keyType:upper().."  |  "..USERNAME;vl.TextColor3=T.TextDim;vl.Font=Enum.Font.GothamMedium;vl.TextSize=12
     local y=104
-    local rows={
-        {"Kısayol","F5 — Menüyü Aç / Kapat (key doğrulanana kadar çalışmaz)"},
-        {"Key Sistemi","GitHub Private Repo'dan doğrulama.\nIlk kullanımda HWID otomatik bağlanır.\nBir key = bir cihaz. Günlük/Haftalık/Aylık/Sınırsız"},
-        {"Config Sistemi","GitHub Gist API ile paylaşım.\nConfig kaydet → Gist ID al → Arkadaşına ver → O da yükler"},
-        {"OBS Bypass","DisplayOrder 200 ile OBS Game Capture'dan gizlenir"},
-        {"Respawn","Fly/Noclip/Speed vb. ölünce kapanmaz, otomatik devam eder"},
-        {"Şifreleme","Bu script Luarmor ile obfuscate edilerek korunur"},
-    }
-    for _,row in ipairs(rows) do
+    for _,row in ipairs({
+        {"Kısayol","F5 — Menü Aç/Kapat"},
+        {"Key Sistemi","GitHub Private Repo'dan doğrulama. HWID kilitleme aktif."},
+        {"Config","Gist ID ile paylaş, başkası direkt yükler."},
+        {"OBS Bypass","DisplayOrder 200 — OBS'den gizli."},
+        {"Respawn","Tüm özellikler ölünce kapanmaz."},
+    }) do
         local card=Instance.new("Frame",sc);card.Size=UDim2.new(1,-28,0,0);card.AutomaticSize=Enum.AutomaticSize.Y;card.Position=UDim2.new(0,14,0,y);card.BackgroundColor3=T.Card;corner(8,card)
         local tl=Instance.new("TextLabel",card);tl.Size=UDim2.new(1,0,0,20);tl.Position=UDim2.new(0,12,0,8);tl.BackgroundTransparency=1;tl.Text=string.upper(row[1]);tl.TextColor3=T.TextFaint;tl.Font=Enum.Font.GothamBold;tl.TextSize=10;tl.TextXAlignment=Enum.TextXAlignment.Left
         local bl=Instance.new("TextLabel",card);bl.Size=UDim2.new(1,-24,0,0);bl.Position=UDim2.new(0,12,0,26);bl.AutomaticSize=Enum.AutomaticSize.Y;bl.BackgroundTransparency=1;bl.Text=row[2];bl.TextColor3=T.Text;bl.Font=Enum.Font.Gotham;bl.TextSize=13;bl.TextWrapped=true;bl.TextXAlignment=Enum.TextXAlignment.Left
@@ -1026,15 +1202,11 @@ local MainFrame,SideBar,Content
 local currentTab="ESP";local menuBuilt=false;local minimized=false
 local MENU_FULL=UDim2.new(0,870,0,640);local MENU_MINI=UDim2.new(0,870,0,46)
 local TABS={
-    {id="ESP",        icon="[E]",label="ESP"},
-    {id="AIMBOT",     icon="[A]",label="Aimbot"},
-    {id="OTHER",      icon="[M]",label="Hareket"},
-    {id="PLAYERS",    icon="[P]",label="Oyuncular"},
-    {id="ITEM",       icon="[I]",label="Eşya"},
-    {id="TEAM CHANGE",icon="[T]",label="Takım"},
-    {id="VISUAL",     icon="[V]",label="Görsel"},
-    {id="CONFIG",     icon="[C]",label="Config"},
-    {id="ABOUT",      icon="[?]",label="Hakkında"},
+    {id="ESP",icon="[E]",label="ESP"},{id="AIMBOT",icon="[A]",label="Aimbot"},
+    {id="OTHER",icon="[M]",label="Hareket"},{id="PLAYERS",icon="[P]",label="Oyuncular"},
+    {id="ITEM",icon="[I]",label="Eşya"},{id="TEAM CHANGE",icon="[T]",label="Takım"},
+    {id="VISUAL",icon="[V]",label="Görsel"},{id="CONFIG",icon="[C]",label="Config"},
+    {id="ABOUT",icon="[?]",label="Hakkında"},
 }
 local sideButtons={}
 
@@ -1056,30 +1228,22 @@ local function createMenu()
     MainGui=makeGui("SusanoUI",200);MainGui.Enabled=true
     MainFrame=Instance.new("Frame",MainGui);MainFrame.Size=MENU_FULL;MainFrame.Position=UDim2.new(0.5,-435,0.5,-320)
     MainFrame.BackgroundColor3=T.BG;MainFrame.Active=true;MainFrame.ClipsDescendants=false;corner(10,MainFrame)
-    -- Soft shadow (3 katman, dış çizgi yok)
     for _,sd in ipairs({{4,3,0.82},{12,6,0.88},{22,10,0.94}}) do
         local s=Instance.new("Frame",MainFrame);s.Size=UDim2.new(1,sd[1],1,sd[1])
         s.Position=UDim2.new(0,-sd[1]/2,0,sd[2]);s.BackgroundColor3=Color3.new(0,0,0)
         s.BackgroundTransparency=sd[3];s.ZIndex=MainFrame.ZIndex-1;s.BorderSizePixel=0;corner(15,s)
     end
     local iB=Instance.new("UIStroke",MainFrame);iB.Color=T.BorderLight;iB.Thickness=1;iB.Transparency=0.6
-
-    -- Title bar
     local tb=Instance.new("Frame",MainFrame);tb.Size=UDim2.new(1,0,0,46);tb.BackgroundColor3=T.TitleBar;tb.BorderSizePixel=0;tb.ClipsDescendants=true
     local tbF=Instance.new("Frame",tb);tbF.Size=UDim2.new(1,0,0.5,0);tbF.Position=UDim2.new(0,0,0.5,0);tbF.BackgroundColor3=T.TitleBar;tbF.BorderSizePixel=0;corner(10,tb)
     local titleLine=Instance.new("Frame",tb);titleLine.Size=UDim2.new(1,0,0,1);titleLine.Position=UDim2.new(0,0,1,-1);titleLine.BackgroundColor3=T.BorderLight;titleLine.BorderSizePixel=0;titleLine.BackgroundTransparency=0.5
-
     local logoTxt=Instance.new("TextLabel",tb);logoTxt.Size=UDim2.new(0,100,1,0);logoTxt.Position=UDim2.new(0,16,0,0);logoTxt.BackgroundTransparency=1;logoTxt.Text="SUSANO";logoTxt.TextColor3=T.Accent;logoTxt.Font=Enum.Font.GothamBlack;logoTxt.TextSize=18;logoTxt.TextXAlignment=Enum.TextXAlignment.Left
     local verTxt=Instance.new("TextLabel",tb);verTxt.Size=UDim2.new(0,40,1,0);verTxt.Position=UDim2.new(0,105,0,0);verTxt.BackgroundTransparency=1;verTxt.Text="v1.0";verTxt.TextColor3=T.TextFaint;verTxt.Font=Enum.Font.GothamMedium;verTxt.TextSize=11;verTxt.TextXAlignment=Enum.TextXAlignment.Left
-
-    -- Key tipi rozeti
     local kBadge=Instance.new("Frame",tb);kBadge.Size=UDim2.new(0,76,0,22);kBadge.Position=UDim2.new(0,156,0.5,-11)
     kBadge.BackgroundColor3=keyType=="lifetime" and T.KeyGold or (keyType=="monthly" and Color3.fromRGB(180,120,255) or (keyType=="weekly" and Color3.fromRGB(80,180,255) or T.AccentFaint));corner(5,kBadge)
     local kBL=Instance.new("TextLabel",kBadge);kBL.Size=UDim2.new(1,0,1,0);kBL.BackgroundTransparency=1;kBL.TextColor3=Color3.new(1,1,1);kBL.Font=Enum.Font.GothamBold;kBL.TextSize=11
     local keyNames={daily="GÜNLÜK",weekly="HAFTALIK",monthly="AYLIK",lifetime="SINIRSIZ"};kBL.Text=keyNames[keyType] or keyType:upper()
-
     local hotkeyTxt=Instance.new("TextLabel",tb);hotkeyTxt.Size=UDim2.new(0,100,1,0);hotkeyTxt.Position=UDim2.new(0.5,-50,0,0);hotkeyTxt.BackgroundTransparency=1;hotkeyTxt.Text="F5 aç/kapat";hotkeyTxt.TextColor3=T.TextFaint;hotkeyTxt.Font=Enum.Font.GothamMedium;hotkeyTxt.TextSize=11
-
     local function mkTBtn(text,bgCol,xOff)
         local btn=Instance.new("TextButton",tb);btn.Size=UDim2.new(0,28,0,28);btn.Position=UDim2.new(1,xOff,0.5,-14)
         btn.BackgroundColor3=bgCol;btn.TextColor3=Color3.new(1,1,1);btn.Font=Enum.Font.GothamBold;btn.TextSize=15;btn.Text=text;corner(6,btn);return btn
@@ -1093,12 +1257,9 @@ local function createMenu()
         minimized=not minimized;tw(MainFrame,0.2,{Size=minimized and MENU_MINI or MENU_FULL})
         task.wait(0.05);SideBar.Visible=not minimized;Content.Visible=not minimized
     end)
-
-    -- Sidebar
     SideBar=Instance.new("Frame",MainFrame);SideBar.Size=UDim2.new(0,170,1,-46);SideBar.Position=UDim2.new(0,0,0,46);SideBar.BackgroundColor3=T.Sidebar;SideBar.BorderSizePixel=0
     local sbF=Instance.new("Frame",SideBar);sbF.Size=UDim2.new(1,0,0.5,0);sbF.BackgroundColor3=T.Sidebar;sbF.BorderSizePixel=0;corner(10,SideBar)
     local sideDiv=Instance.new("Frame",MainFrame);sideDiv.Size=UDim2.new(0,1,1,-46);sideDiv.Position=UDim2.new(0,170,0,46);sideDiv.BackgroundColor3=T.BorderLight;sideDiv.BorderSizePixel=0;sideDiv.BackgroundTransparency=0.5
-
     sideButtons={}
     for i,tab in ipairs(TABS) do
         local btn=Instance.new("TextButton",SideBar);btn.Size=UDim2.new(1,-14,0,34);btn.Position=UDim2.new(0,7,0,5+(i-1)*37)
@@ -1110,30 +1271,24 @@ local function createMenu()
         btn.MouseButton1Click:Connect(function() switchTab(tab.id) end)
         table.insert(sideButtons,btn)
     end
-
     Content=Instance.new("Frame",MainFrame);Content.Size=UDim2.new(1,-171,1,-46);Content.Position=UDim2.new(0,171,0,46);Content.BackgroundTransparency=1;Content.ClipsDescendants=true
-
-    -- Sürükleme
     local dragging,dragStart,startPos=false
     tb.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true;dragStart=i.Position;startPos=MainFrame.Position;i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then dragging=false end end) end end)
     local dragInput;tb.InputChanged:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseMovement then dragInput=i end end)
     UserInputService.InputChanged:Connect(function(i) if dragging and i==dragInput then local d=i.Position-dragStart;MainFrame.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y) end end)
-
-    -- Yeniden boyutlandırma
     local rH=Instance.new("Frame",MainFrame);rH.Size=UDim2.new(0,12,0,12);rH.Position=UDim2.new(1,-12,1,-12);rH.BackgroundTransparency=1
     local rD=Instance.new("Frame",rH);rD.Size=UDim2.new(0,4,0,4);rD.Position=UDim2.new(1,-4,1,-4);rD.BackgroundColor3=T.BorderLight;rD.BackgroundTransparency=0.3;corner(2,rD)
     local resizing,resStart,resStartSz=false
     rH.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then resizing=true;resStart=i.Position;resStartSz=Vector2.new(MainFrame.AbsoluteSize.X,MainFrame.AbsoluteSize.Y);i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then resizing=false end end) end end)
     local resInput;rH.InputChanged:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseMovement then resInput=i end end)
     UserInputService.InputChanged:Connect(function(i) if resizing and i==resInput then local d=i.Position-resStart;MainFrame.Size=UDim2.new(0,math.clamp(resStartSz.X+d.X,560,1300),0,math.clamp(resStartSz.Y+d.Y,400,900));SideBar.Size=UDim2.new(0,170,1,-46);Content.Size=UDim2.new(1,-171,1,-46) end end)
-
     menuBuilt=true
     local ep=MainFrame.Position;MainFrame.Position=ep+UDim2.new(0,0,0,14);MainFrame.BackgroundTransparency=1
     tw(MainFrame,0.22,{BackgroundTransparency=0,Position=ep})
     switchTab(currentTab)
 end
 
--- ========== RESPAWN PERSISTENCE ==========
+-- ========== RESPAWN ==========
 LocalPlayer.CharacterAdded:Connect(function()
     task.spawn(function()
         task.wait(0.5)
@@ -1149,19 +1304,15 @@ LocalPlayer.CharacterAdded:Connect(function()
     end)
 end)
 
--- ========== F5 — HARD BLOCK ==========
+-- ========== F5 HARD BLOCK ==========
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.F5 then
-        if not keyValidated then return end  -- Key yoksa hiçbir şey olmaz
-        if not menuBuilt then
-            createMenu()
+        if not keyValidated then return end
+        if not menuBuilt then createMenu()
         else
-            MainGui.Enabled = not MainGui.Enabled
-            if MainGui.Enabled then
-                MainFrame.BackgroundTransparency = 1
-                tw(MainFrame, 0.22, {BackgroundTransparency = 0})
-            end
+            MainGui.Enabled=not MainGui.Enabled
+            if MainGui.Enabled then MainFrame.BackgroundTransparency=1;tw(MainFrame,0.22,{BackgroundTransparency=0}) end
         end
     end
 end)
@@ -1174,7 +1325,11 @@ RunService.RenderStepped:Connect(function()
     if not _G.Verified then return end
     if _G.ESP then pcall(updateESP);for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer and not espCache[p] and p.Character then buildESP(p) end end else clearAllESP() end
     pcall(updateSkeleton)
-    if _G.Aimbot and not _G.RageAimbot then local t=getBestTarget();if t then local cf=CFrame.new(Camera.CFrame.Position,t.part.Position);Camera.CFrame=Camera.CFrame:Lerp(cf,t.part==aimTarget and _G.AimbotSmoothness or _G.AimbotSmoothness*1.5);aimTarget=t.part;updateFOVColor(Color3.fromRGB(80,255,120)) else aimTarget=nil;updateFOVColor(Color3.new(1,1,1)) end elseif not _G.RageAimbot then aimTarget=nil;updateFOVColor(Color3.new(1,1,1)) end
+    if _G.Aimbot and not _G.RageAimbot then
+        local t=getBestTarget()
+        if t then local cf=CFrame.new(Camera.CFrame.Position,t.part.Position);Camera.CFrame=Camera.CFrame:Lerp(cf,t.part==aimTarget and _G.AimbotSmoothness or _G.AimbotSmoothness*1.5);aimTarget=t.part;updateFOVColor(Color3.fromRGB(80,255,120))
+        else aimTarget=nil;updateFOVColor(Color3.new(1,1,1)) end
+    elseif not _G.RageAimbot then aimTarget=nil;updateFOVColor(Color3.new(1,1,1)) end
     if FOVCircle then local r=_G.FOVSize;FOVCircle.Size=UDim2.new(0,r*2,0,r*2);FOVCircle.Position=UDim2.new(0.5,-r,0.5,-r);FOVCircle.Visible=_G.FOVVisible and (_G.Aimbot or _G.RageAimbot or _G.SilentAim) end
     if _G.FlyEnabled and not flying        then enableFly()         elseif not _G.FlyEnabled and flying       then disableFly()        end
     if _G.NoClipEnabled and not ncActive    then enableNoclip()      elseif not _G.NoClipEnabled and ncActive  then disableNoclip()     end
@@ -1187,35 +1342,31 @@ RunService.RenderStepped:Connect(function()
     if _G.KillAura and not killAuraConn     then enableKillAura()    elseif not _G.KillAura and killAuraConn   then disableKillAura()   end
     if _G.AntiAFK and not afkConn           then enableAntiAFK()     elseif not _G.AntiAFK and afkConn         then disableAntiAFK()    end
     if _G.ThirdPerson and not tpConn        then enableThirdPerson() elseif not _G.ThirdPerson and tpConn      then disableThirdPerson() end
-    if _G.FullBright  then applyFullBright(true)  end;if _G.NoFog       then applyNoFog(true)       end
+    if _G.FullBright  then applyFullBright(true) end;if _G.NoFog      then applyNoFog(true)      end
     if _G.FOVChanger  then Camera.FieldOfView=_G.FOVChangerVal end;if _G.TimeChanger then applyTime(true) end
-    if _G.WorldColor  then applyWorldColor(true)  end
+    if _G.WorldColor  then applyWorldColor(true) end
 end)
 
 -- ========== BAŞLANGIÇ ==========
--- Kayıtlı key var mı? Varsa direkt doğrula, yoksa menü aç
 local savedKey = loadSavedKey()
 if savedKey then
-    -- Arka planda doğrula (non-blocking), key menüsü hemen kapanır
     validateKey(savedKey, function(ok, result)
         if ok then
             keyValidated=true;keyType=result;_G.Verified=true;activeKey=savedKey
             keyMenuGui:Destroy()
             createFOVCircle()
-            task.spawn(function() task.wait(0.05); createMenu() end)
+            task.spawn(function() task.wait(0.05);createMenu() end)
         else
-            -- Kayıtlı key geçersiz, yeni key iste
-            safeDel(KEY_FILE)  -- eski geçersiz key'i sil
+            safeDel(KEY_FILE)
             buildKeyMenu(function()
                 createFOVCircle()
-                task.spawn(function() task.wait(0.05); createMenu() end)
+                task.spawn(function() task.wait(0.05);createMenu() end)
             end)
         end
     end)
 else
-    -- Key yok, anında menü aç
     buildKeyMenu(function()
         createFOVCircle()
-        task.spawn(function() task.wait(0.05); createMenu() end)
+        task.spawn(function() task.wait(0.05);createMenu() end)
     end)
 end
