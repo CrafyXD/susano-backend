@@ -1,0 +1,8 @@
+{
+  "SUSANO-LIFE-DEMO1": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "note": "Test key"
+  }
+}
