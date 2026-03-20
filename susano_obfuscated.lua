@@ -41,6 +41,10 @@ local setnetworkowner   = setnetworkowner or function(part, plr)
     pcall(function() sethiddenproperty(part, "NetworkOwnership", plr == LocalPlayer and 0 or 1) end)
 end
 
+-- ========== GUI PARENT (XENO FIX) ==========
+-- Xeno'da CoreGui'ye direkt yazamayız, PlayerGui kullanıyoruz
+local GuiParent = LocalPlayer:WaitForChild("PlayerGui")
+
 -- ========== HWID ==========
 local function getHWID()
     local methods = {
@@ -144,6 +148,7 @@ end
 -- ========== KEY SYSTEM ==========
 local keyValidated = false
 local keyType      = "none"
+local keyExpires   = 0  -- key bitiş zamanı (unix timestamp)
 local activeKey    = ""
 
 local function loadKeys()
@@ -160,24 +165,41 @@ local function saveKeys(keysData)
     return githubWrite("keys.json", json, "hwid bind")
 end
 
+-- Kalan süreyi string olarak döndür
+local function formatTimeLeft(expires)
+    if expires == 0 then return "SINIRSIZ" end
+    local left = expires - os.time()
+    if left <= 0 then return "SÜRESİ DOLDU" end
+    local days  = math.floor(left / 86400)
+    local hours = math.floor((left % 86400) / 3600)
+    local mins  = math.floor((left % 3600) / 60)
+    if days > 0 then
+        return days.."g "..hours.."s kaldı"
+    elseif hours > 0 then
+        return hours.."s "..mins.."dk kaldı"
+    else
+        return mins.."dk kaldı"
+    end
+end
+
 local function validateKey(key, callback)
     key = key:upper():gsub("%s+", "")
-    if key == "" then callback(false, "Anahtar gir"); return end
+    if key == "" then callback(false, "Anahtar gir", 0); return end
     task.spawn(function()
         local keysData = loadKeys()
-        if not keysData then callback(false, "Sunucuya bağlanılamadı"); return end
+        if not keysData then callback(false, "Sunucuya bağlanılamadı", 0); return end
         local keyData = keysData[key]
-        if not keyData then callback(false, "Geçersiz anahtar"); return end
+        if not keyData then callback(false, "Geçersiz anahtar", 0); return end
         if keyData.expires and keyData.expires > 0 then
-            if os.time() > keyData.expires then callback(false, "Anahtarın süresi dolmuş"); return end
+            if os.time() > keyData.expires then callback(false, "Anahtarın süresi dolmuş", 0); return end
         end
         if keyData.hwid and keyData.hwid ~= "" and keyData.hwid ~= "null" then
-            if keyData.hwid ~= HWID then callback(false, "Bu anahtar başka bir cihaza bağlı"); return end
+            if keyData.hwid ~= HWID then callback(false, "Bu anahtar başka bir cihaza bağlı", 0); return end
         else
             keysData[key].hwid = HWID
             task.spawn(function() saveKeys(keysData) end)
         end
-        callback(true, keyData.type or "lifetime")
+        callback(true, keyData.type or "lifetime", keyData.expires or 0)
     end)
 end
 
@@ -244,48 +266,20 @@ local function makeScroll(parent)
     sc.BorderSizePixel=0;return sc
 end
 
--- ========== MAKEGUI - XENO UYUMLU ==========
+-- ========== MAKEGUI - PlayerGui kullanıyor (Xeno uyumlu) ==========
 local function makeGui(name, order)
-    -- gethui() Xeno'da CoreGui bypass sağlar
-    local guiParent
-    if gethui then
-        guiParent = gethui()
-    else
-        guiParent = CoreGui
-    end
-    
-    -- Varolan GUI'yi temizle
+    -- Eski GUI varsa temizle
     pcall(function()
-        local e = guiParent:FindFirstChild(name)
+        local e = GuiParent:FindFirstChild(name)
         if e then e:Destroy() end
     end)
-    -- CoreGui'de de kontrol et
-    pcall(function()
-        local e = CoreGui:FindFirstChild(name)
-        if e then e:Destroy() end
-    end)
-    
     local g = Instance.new("ScreenGui")
     g.Name = name
     g.ResetOnSpawn = false
     g.IgnoreGuiInset = true
     g.DisplayOrder = order or 200
     pcall(function() g.ZIndexBehavior = Enum.ZIndexBehavior.Global end)
-    
-    -- Xeno'da syn.protect_gui varsa kullan
-    if syn and syn.protect_gui then
-        syn.protect_gui(g)
-        g.Parent = CoreGui
-    elseif gethui then
-        g.Parent = gethui()
-    else
-        -- Fallback: PlayerGui
-        local ok = pcall(function() g.Parent = CoreGui end)
-        if not ok then
-            g.Parent = LocalPlayer:WaitForChild("PlayerGui")
-        end
-    end
-    
+    g.Parent = GuiParent
     return g
 end
 
@@ -302,7 +296,7 @@ local function buildKeyMenu(onSuccess)
         l.BackgroundTransparency=0.97;l.BorderSizePixel=0
     end
     local card=Instance.new("Frame",keyMenuGui)
-    card.Size=UDim2.new(0,460,0,500);card.Position=UDim2.new(0.5,-230,0.5,-250)
+    card.Size=UDim2.new(0,460,0,520);card.Position=UDim2.new(0.5,-230,0.5,-260)
     card.BackgroundColor3=T.BG;card.BorderSizePixel=0;corner(12,card)
     local cs=Instance.new("UIStroke",card);cs.Color=T.BorderLight;cs.Thickness=1;cs.Transparency=0.5
     for _,sd in ipairs({{4,3,0.82},{12,6,0.88},{22,10,0.94}}) do
@@ -324,12 +318,15 @@ local function buildKeyMenu(onSuccess)
     local info=Instance.new("Frame",profBg);info.Size=UDim2.new(1,-68,1,0);info.Position=UDim2.new(0,64,0,0);info.BackgroundTransparency=1
     local function iLbl(y,t,c,s) local l=Instance.new("TextLabel",info);l.Size=UDim2.new(1,0,0,18);l.Position=UDim2.new(0,0,0,y);l.BackgroundTransparency=1;l.Text=t;l.TextColor3=c;l.Font=Enum.Font.GothamMedium;l.TextSize=s;l.TextXAlignment=Enum.TextXAlignment.Left;return l end
     iLbl(8,"@"..USERNAME,T.Text,15);iLbl(28,"HWID: "..HWID:sub(1,22).."…",T.TextFaint,11);iLbl(44,"UID: "..USER_ID.."  |  Place: "..tostring(game.PlaceId),T.TextFaint,10)
+
+    -- Key tipi rozetleri
     local badgeRow=Instance.new("Frame",card);badgeRow.Size=UDim2.new(1,-32,0,28);badgeRow.Position=UDim2.new(0,16,0,140);badgeRow.BackgroundTransparency=1
     local bLayout=Instance.new("UIListLayout",badgeRow);bLayout.FillDirection=Enum.FillDirection.Horizontal;bLayout.Padding=UDim.new(0,6);bLayout.VerticalAlignment=Enum.VerticalAlignment.Center
     for _,bd in ipairs({{l="GÜNLÜK",c=T.TextDim},{l="HAFTALIK",c=Color3.fromRGB(80,180,255)},{l="AYLIK",c=Color3.fromRGB(180,120,255)},{l="SINIRSIZ",c=T.KeyGold}}) do
         local b=Instance.new("Frame",badgeRow);b.Size=UDim2.new(0,82,1,0);b.BackgroundColor3=T.Card;corner(5,b)
         local bl=Instance.new("TextLabel",b);bl.Size=UDim2.new(1,0,1,0);bl.BackgroundTransparency=1;bl.Text=bd.l;bl.TextColor3=bd.c;bl.Font=Enum.Font.GothamBold;bl.TextSize=10
     end
+
     local inputLbl=Instance.new("TextLabel",card);inputLbl.Size=UDim2.new(1,-32,0,18);inputLbl.Position=UDim2.new(0,16,0,180);inputLbl.BackgroundTransparency=1;inputLbl.Text="ANAHTAR";inputLbl.TextColor3=T.TextFaint;inputLbl.Font=Enum.Font.GothamBold;inputLbl.TextSize=10;inputLbl.TextXAlignment=Enum.TextXAlignment.Left
     local inputBox=Instance.new("TextBox",card)
     inputBox.Size=UDim2.new(1,-32,0,46);inputBox.Position=UDim2.new(0,16,0,200)
@@ -338,7 +335,14 @@ local function buildKeyMenu(onSuccess)
     corner(8,inputBox);pad(inputBox,14,0)
     local ibStroke=Instance.new("UIStroke",inputBox);ibStroke.Color=T.BorderLight;ibStroke.Thickness=1
     local statusLbl=Instance.new("TextLabel",card);statusLbl.Size=UDim2.new(1,-32,0,20);statusLbl.Position=UDim2.new(0,16,0,252);statusLbl.BackgroundTransparency=1;statusLbl.Text="";statusLbl.Font=Enum.Font.GothamMedium;statusLbl.TextSize=13;statusLbl.TextXAlignment=Enum.TextXAlignment.Left
-    local remRow=Instance.new("Frame",card);remRow.Size=UDim2.new(1,-32,0,28);remRow.Position=UDim2.new(0,16,0,278);remRow.BackgroundTransparency=1
+
+    -- KEY BİLGİ KARTI (doğrulama sonrası görünür)
+    local keyInfoCard=Instance.new("Frame",card);keyInfoCard.Size=UDim2.new(1,-32,0,36);keyInfoCard.Position=UDim2.new(0,16,0,278);keyInfoCard.BackgroundColor3=T.Card;keyInfoCard.Visible=false;corner(8,keyInfoCard)
+    local keyTypeLbl=Instance.new("TextLabel",keyInfoCard);keyTypeLbl.Size=UDim2.new(0.5,0,1,0);keyTypeLbl.Position=UDim2.new(0,10,0,0);keyTypeLbl.BackgroundTransparency=1;keyTypeLbl.Font=Enum.Font.GothamBold;keyTypeLbl.TextSize=13;keyTypeLbl.TextXAlignment=Enum.TextXAlignment.Left
+    local keyTimeLbl=Instance.new("TextLabel",keyInfoCard);keyTimeLbl.Size=UDim2.new(0.5,0,1,0);keyTimeLbl.Position=UDim2.new(0.5,0,0,0);keyTimeLbl.BackgroundTransparency=1;keyTimeLbl.Font=Enum.Font.GothamMedium;keyTimeLbl.TextSize=12;keyTimeLbl.TextXAlignment=Enum.TextXAlignment.Right
+    local ktPad=Instance.new("UIPadding",keyTimeLbl);ktPad.PaddingRight=UDim.new(0,10)
+
+    local remRow=Instance.new("Frame",card);remRow.Size=UDim2.new(1,-32,0,28);remRow.Position=UDim2.new(0,16,0,322);remRow.BackgroundTransparency=1
     local remLbl=Instance.new("TextLabel",remRow);remLbl.Size=UDim2.new(0.78,0,1,0);remLbl.BackgroundTransparency=1;remLbl.Text="Bu cihazda anahtarı hatırla";remLbl.TextColor3=T.TextDim;remLbl.Font=Enum.Font.GothamMedium;remLbl.TextSize=13;remLbl.TextXAlignment=Enum.TextXAlignment.Left
     local remOn=true
     local remPill=Instance.new("Frame",remRow);remPill.Size=UDim2.new(0,44,0,22);remPill.Position=UDim2.new(1,-44,0.5,-11);remPill.BackgroundColor3=T.OnBG;corner(22,remPill)
@@ -349,11 +353,11 @@ local function buildKeyMenu(onSuccess)
         tw(remKnob,0.18,{Position=UDim2.new(remOn and 1 or 0,remOn and -19 or 3,0.5,-8),BackgroundColor3=remOn and T.TitleBar or T.AccentDim})
     end)
     local activateBtn=Instance.new("TextButton",card)
-    activateBtn.Size=UDim2.new(1,-32,0,46);activateBtn.Position=UDim2.new(0,16,0,314)
+    activateBtn.Size=UDim2.new(1,-32,0,46);activateBtn.Position=UDim2.new(0,16,0,358)
     activateBtn.BackgroundColor3=T.Accent;activateBtn.TextColor3=T.BG;activateBtn.Font=Enum.Font.GothamBold;activateBtn.TextSize=16;activateBtn.Text="GİRİŞ YAP";corner(8,activateBtn)
     activateBtn.MouseEnter:Connect(function() tw(activateBtn,0.1,{BackgroundColor3=Color3.fromRGB(215,215,215)}) end)
     activateBtn.MouseLeave:Connect(function() tw(activateBtn,0.1,{BackgroundColor3=T.Accent}) end)
-    local footLbl=Instance.new("TextLabel",card);footLbl.Size=UDim2.new(1,-32,0,20);footLbl.Position=UDim2.new(0,16,0,370);footLbl.BackgroundTransparency=1;footLbl.Text="Susano V1.0  |  Anahtar almak için Discord'a gel";footLbl.TextColor3=T.TextFaint;footLbl.Font=Enum.Font.GothamMedium;footLbl.TextSize=11
+    local footLbl=Instance.new("TextLabel",card);footLbl.Size=UDim2.new(1,-32,0,20);footLbl.Position=UDim2.new(0,16,0,412);footLbl.BackgroundTransparency=1;footLbl.Text="Susano V1.0  |  Anahtar almak için Discord'a gel";footLbl.TextColor3=T.TextFaint;footLbl.Font=Enum.Font.GothamMedium;footLbl.TextSize=11
     local attempts=0;local busy=false
     local function tryActivate()
         if busy then return end
@@ -361,13 +365,25 @@ local function buildKeyMenu(onSuccess)
         if key=="" then statusLbl.Text="Anahtar gir.";statusLbl.TextColor3=T.KeyRed;return end
         busy=true;statusLbl.Text="Doğrulanıyor…";statusLbl.TextColor3=T.TextDim
         activateBtn.Text="KONTROL EDİLİYOR…";activateBtn.BackgroundColor3=T.AccentFaint
-        validateKey(key, function(ok, result)
+        validateKey(key, function(ok, result, expires)
             busy=false;activateBtn.Text="GİRİŞ YAP";activateBtn.BackgroundColor3=T.Accent
             if ok then
                 if remOn then safeWrite(KEY_FILE, key) end
-                activeKey=key;statusLbl.Text="Geçerli anahtar!  Tür: "..result:upper();statusLbl.TextColor3=T.KeyGreen
+                activeKey=key;keyExpires=expires
+
+                -- Key bilgi kartını göster
+                keyInfoCard.Visible=true
+                local typeNames={daily="GÜNLÜK",weekly="HAFTALIK",monthly="AYLIK",lifetime="SINIRSIZ"}
+                local typeColors={daily=T.TextDim,weekly=Color3.fromRGB(80,180,255),monthly=Color3.fromRGB(180,120,255),lifetime=T.KeyGold}
+                keyTypeLbl.Text=typeNames[result] or result:upper()
+                keyTypeLbl.TextColor3=typeColors[result] or T.Text
+                keyTimeLbl.Text=formatTimeLeft(expires)
+                keyTimeLbl.TextColor3=expires==0 and T.KeyGold or T.KeyGreen
+
+                statusLbl.Text="Geçerli anahtar!";statusLbl.TextColor3=T.KeyGreen
                 tw(activateBtn,0.2,{BackgroundColor3=T.KeyGreen});tw(ibStroke,0.2,{Color=T.KeyGreen})
-                task.wait(0.7);tw(card,0.25,{BackgroundTransparency=1});tw(overlay,0.25,{BackgroundTransparency=1})
+                task.wait(0.8)
+                tw(card,0.25,{BackgroundTransparency=1});tw(overlay,0.25,{BackgroundTransparency=1})
                 task.wait(0.3);keyMenuGui:Destroy();keyValidated=true;keyType=result;_G.Verified=true;onSuccess(result)
             else
                 attempts=attempts+1;statusLbl.Text=tostring(result).."  ("..attempts.." deneme)";statusLbl.TextColor3=T.KeyRed
@@ -380,8 +396,8 @@ local function buildKeyMenu(onSuccess)
     activateBtn.MouseButton1Click:Connect(tryActivate)
     inputBox.FocusLost:Connect(function(enter) if enter then tryActivate() end end)
     task.spawn(function() task.wait(0.05);inputBox:CaptureFocus() end)
-    card.BackgroundTransparency=1;card.Position=UDim2.new(0.5,-230,0.5,-240)
-    tw(card,0.18,{BackgroundTransparency=0,Position=UDim2.new(0.5,-230,0.5,-250)})
+    card.BackgroundTransparency=1;card.Position=UDim2.new(0.5,-230,0.5,-250)
+    tw(card,0.18,{BackgroundTransparency=0,Position=UDim2.new(0.5,-230,0.5,-260)})
 end
 
 -- ========== FORWARD DECLARATIONS ==========
@@ -467,7 +483,6 @@ local function getBestTarget()
     end;return best
 end
 
--- ========== AUTO SHOOT ==========
 if not mouse1press   then mouse1press=function()   pcall(function() UserInputService:SendInput(Enum.UserInputType.MouseButton1,true)  end) end end
 if not mouse1release then mouse1release=function() pcall(function() UserInputService:SendInput(Enum.UserInputType.MouseButton1,false) end) end end
 local autoShootConn
@@ -479,19 +494,14 @@ local function startAutoShoot()
     end)
 end
 
--- ========== SILENT AIM ==========
 local silentAimActive=false;local _savedCam=nil;local _saApplied=false;local saConn1,saConn2
 enableSilentAim=function()
     silentAimActive=true;if saConn1 then saConn1:Disconnect() end;if saConn2 then saConn2:Disconnect() end
-    saConn1=RunService.Stepped:Connect(function()
-        if not _G.SilentAim or not silentAimActive then _saApplied=false;return end
-        local t=getBestTarget();if t then _savedCam=Camera.CFrame;Camera.CFrame=CFrame.new(Camera.CFrame.Position,t.part.Position);_saApplied=true else _saApplied=false end
-    end)
+    saConn1=RunService.Stepped:Connect(function() if not _G.SilentAim or not silentAimActive then _saApplied=false;return end;local t=getBestTarget();if t then _savedCam=Camera.CFrame;Camera.CFrame=CFrame.new(Camera.CFrame.Position,t.part.Position);_saApplied=true else _saApplied=false end end)
     saConn2=RunService.RenderStepped:Connect(function() if _saApplied and _savedCam then Camera.CFrame=_savedCam;_saApplied=false end end)
 end
 disableSilentAim=function() silentAimActive=false;if saConn1 then saConn1:Disconnect() end;if saConn2 then saConn2:Disconnect() end;if _savedCam then Camera.CFrame=_savedCam end end
 
--- ========== RAGE AIMBOT ==========
 local rageActive,rageConn=false,nil
 disableRageAimbot=function() rageActive=false;if rageConn then rageConn:Disconnect();rageConn=nil end end
 enableRageAimbot=function()
@@ -504,7 +514,6 @@ enableRageAimbot=function()
     end)
 end
 
--- ========== MOVEMENT ==========
 local ijConn;enableInfiniteJump=function() if ijConn then ijConn:Disconnect() end;ijConn=UserInputService.JumpRequest:Connect(function() if not _G.InfiniteJump then return end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end end end) end;disableInfiniteJump=function() if ijConn then ijConn:Disconnect();ijConn=nil end end
 local ljConn;enableLongJump=function() if ljConn then ljConn:Disconnect() end;ljConn=UserInputService.JumpRequest:Connect(function() if not _G.LongJump then return end;local c=LocalPlayer.Character;if not c then return end;local hrp=c:FindFirstChild("HumanoidRootPart");local hum=c:FindFirstChildOfClass("Humanoid");if hrp and hum and hum.FloorMaterial~=Enum.Material.Air then local bv=Instance.new("BodyVelocity");bv.Velocity=hrp.CFrame.LookVector*_G.LongJumpPower+Vector3.new(0,30,0);bv.MaxForce=Vector3.new(1e5,1e5,1e5);bv.P=1e4;bv.Parent=hrp;game:GetService("Debris"):AddItem(bv,0.15) end end) end;disableLongJump=function() if ljConn then ljConn:Disconnect();ljConn=nil end end
 local swimConn;enableSwimHack=function() if swimConn then swimConn:Disconnect() end;swimConn=RunService.Stepped:Connect(function() if not _G.SwimHack then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");if hum and hum:GetState()==Enum.HumanoidStateType.Swimming then hum.WalkSpeed=16*_G.SpeedMultiplier end end) end
@@ -513,12 +522,10 @@ local spdConn,spdActive=nil,false;local origSpeed=16;enableSpeed=function() if s
 local flyConn,flying=nil,false;local bVel,bGyro;enableFly=function() if flying then return end;local c=LocalPlayer.Character;if not c then return end;local hum=c:FindFirstChildOfClass("Humanoid");local hrp=c:FindFirstChild("HumanoidRootPart");if not hum or not hrp then return end;flying=true;bVel=Instance.new("BodyVelocity");bVel.MaxForce=Vector3.new(1e5,1e5,1e5);bVel.P=1e4;bVel.Parent=hrp;bGyro=Instance.new("BodyGyro");bGyro.MaxTorque=Vector3.new(1e5,1e5,1e5);bGyro.P=1e4;bGyro.D=100;bGyro.Parent=hrp;flyConn=RunService.RenderStepped:Connect(function() if not flying or not hrp then disableFly();return end;bGyro.CFrame=Camera.CFrame;local v=Vector3.zero;local ui=UserInputService;if ui:IsKeyDown(Enum.KeyCode.W) then v=v+Camera.CFrame.LookVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.S) then v=v-Camera.CFrame.LookVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.D) then v=v+Camera.CFrame.RightVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.A) then v=v-Camera.CFrame.RightVector*_G.FlySpeed end;if ui:IsKeyDown(Enum.KeyCode.Space) then v=v+Vector3.new(0,_G.FlySpeed,0) end;if ui:IsKeyDown(Enum.KeyCode.LeftShift) or ui:IsKeyDown(Enum.KeyCode.Q) then v=v-Vector3.new(0,_G.FlySpeed,0) end;bVel.Velocity=v;if hum:GetState()~=Enum.HumanoidStateType.Freefall then hum:ChangeState(Enum.HumanoidStateType.Freefall) end end) end;disableFly=function() flying=false;if flyConn then flyConn:Disconnect();flyConn=nil end;if bVel then bVel:Destroy();bVel=nil end;if bGyro then bGyro:Destroy();bGyro=nil end;local c=LocalPlayer.Character;if c then local h=c:FindFirstChildOfClass("Humanoid");if h then h:ChangeState(Enum.HumanoidStateType.Landed) end end end
 local ncConn,ncActive=nil,false;enableNoclip=function() if ncActive then return end;ncActive=true;ncConn=RunService.Stepped:Connect(function() if not ncActive or not LocalPlayer.Character then ncActive=false;if ncConn then ncConn:Disconnect() end;return end;for _,p in pairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") and p.CanCollide then p.CanCollide=false;setnetworkowner(p,LocalPlayer) end end end) end;disableNoclip=function() ncActive=false;if ncConn then ncConn:Disconnect();ncConn=nil end;local c=LocalPlayer.Character;if c then for _,p in pairs(c:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=true end end end end
 
--- ========== PLAYER FEATURES ==========
 local killAuraConn;enableKillAura=function() if killAuraConn then killAuraConn:Disconnect() end;killAuraConn=RunService.Heartbeat:Connect(function() if not _G.KillAura then return end;local c=LocalPlayer.Character;if not c then return end;local hrp=c:FindFirstChild("HumanoidRootPart");if not hrp then return end;local tool=c:FindFirstChildOfClass("Tool");for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer and p.Character then local friendly=p.Team and LocalPlayer.Team and p.Team==LocalPlayer.Team;if friendly then continue end;local phum=p.Character:FindFirstChildOfClass("Humanoid");local phrp=p.Character:FindFirstChild("HumanoidRootPart");if not phum or not phrp or phum.Health<=0 then continue end;if (phrp.Position-hrp.Position).Magnitude<=_G.KillAuraRange then if tool then for _,child in ipairs(tool:GetDescendants()) do if child:IsA("RemoteEvent") then pcall(function() child:FireServer(p.Character) end) end end;pcall(function() tool:Activate() end) end end end end end) end;disableKillAura=function() if killAuraConn then killAuraConn:Disconnect();killAuraConn=nil end end
 local afkConn;enableAntiAFK=function() if afkConn then afkConn:Disconnect() end;afkConn=RunService.Heartbeat:Connect(function() if not _G.AntiAFK then return end;pcall(function() local vu=game:GetService("VirtualUser");vu:CaptureController();vu:ClickButton2(Vector2.new()) end) end) end;disableAntiAFK=function() if afkConn then afkConn:Disconnect();afkConn=nil end end
 local nameSpoofConn;applyNameSpoof=function() local name=_G.SpoofedName~="" and _G.SpoofedName or LocalPlayer.Name;local function spoofChar(char) if not char then return end;local head=char:FindFirstChild("Head");if not head then return end;for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=not _G.NameSpoof end end;local existing=head:FindFirstChild("SusanoSpoofTag");if _G.NameSpoof then if not existing then local bb=Instance.new("BillboardGui",head);bb.Name="SusanoSpoofTag";bb.AlwaysOnTop=false;bb.Size=UDim2.new(0,250,0,36);bb.StudsOffset=Vector3.new(0,2.2,0);local lbl=Instance.new("TextLabel",bb);lbl.Size=UDim2.new(1,0,1,0);lbl.BackgroundTransparency=1;lbl.TextColor3=Color3.new(1,1,1);lbl.Font=Enum.Font.GothamBold;lbl.TextSize=17;lbl.TextStrokeTransparency=0.5;lbl.Name="SpoofLbl" end;local lbl=head.SusanoSpoofTag:FindFirstChild("SpoofLbl");if lbl then lbl.Text=name end else if existing then existing:Destroy() end;for _,gui in ipairs(head:GetChildren()) do if gui:IsA("BillboardGui") then gui.Enabled=true end end end end;spoofChar(LocalPlayer.Character);if nameSpoofConn then nameSpoofConn:Disconnect() end;if _G.NameSpoof then nameSpoofConn=LocalPlayer.CharacterAdded:Connect(function(char) task.wait(0.5);spoofChar(char) end) end end
 
--- ========== VISUAL ==========
 local origAmbient=Lighting.Ambient;local origBrightness=Lighting.Brightness;local origFogEnd=Lighting.FogEnd;local origFogStart=Lighting.FogStart;local origCamFOV=Camera.FieldOfView;local origTimeOfDay=Lighting.TimeOfDay;local origColorShift=Lighting.ColorShift_Top
 applyFullBright=function(v) if v then Lighting.Ambient=Color3.new(1,1,1);Lighting.Brightness=2;for _,e in ipairs(Lighting:GetChildren()) do if e:IsA("BlurEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("SunRaysEffect") or e:IsA("BloomEffect") then e.Enabled=false end end else Lighting.Ambient=origAmbient;Lighting.Brightness=origBrightness end end
 applyNoFog=function(v) if v then Lighting.FogEnd=1e6;Lighting.FogStart=1e6 else Lighting.FogEnd=origFogEnd;Lighting.FogStart=origFogStart end end
@@ -530,11 +537,7 @@ local tpConn;enableThirdPerson=function() Camera.CameraType=Enum.CameraType.Scri
 local espCache,esp2D,espTracers={},{},{}
 local function getESPColors() return Color3.fromRGB(_G.ESPEnemyR,_G.ESPEnemyG,_G.ESPEnemyB),Color3.fromRGB(_G.ESPFriendR,_G.ESPFriendG,_G.ESPFriendB),Color3.fromRGB(_G.ESPVisR,_G.ESPVisG,_G.ESPVisB) end
 local function isVisible(player) if not player.Character then return false end;local head=player.Character:FindFirstChild("Head");if not head then return false end;local origin=Camera.CFrame.Position;local ray=Ray.new(origin,(head.Position-origin).Unit*1000);local hit=Workspace:FindPartOnRayWithIgnoreList(ray,{LocalPlayer.Character,player.Character});return hit==nil end
-local function clearESPPlayer(p)
-    if espCache[p] then if espCache[p].hl then espCache[p].hl:Destroy() end;if espCache[p].bb then espCache[p].bb:Destroy() end;if espCache[p].hbBB then espCache[p].hbBB:Destroy() end;espCache[p]=nil end
-    if esp2D[p] then for _,v in pairs(esp2D[p]) do pcall(function() v:Remove() end) end;esp2D[p]=nil end
-    if espTracers[p] then pcall(function() espTracers[p]:Remove() end);espTracers[p]=nil end;clearSkeleton(p)
-end
+local function clearESPPlayer(p) if espCache[p] then if espCache[p].hl then espCache[p].hl:Destroy() end;if espCache[p].bb then espCache[p].bb:Destroy() end;if espCache[p].hbBB then espCache[p].hbBB:Destroy() end;espCache[p]=nil end;if esp2D[p] then for _,v in pairs(esp2D[p]) do pcall(function() v:Remove() end) end;esp2D[p]=nil end;if espTracers[p] then pcall(function() espTracers[p]:Remove() end);espTracers[p]=nil end;clearSkeleton(p) end
 local function clearAllESP() for p in pairs(espCache) do clearESPPlayer(p) end end
 local function buildESP(player)
     if not _G.ESP or player==LocalPlayer then return end;local char=player.Character;if not char then return end
@@ -566,13 +569,11 @@ local function onChar(p) if _G.ESP then task.wait(1);buildESP(p) end end
 Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() onChar(p) end);if p.Character then onChar(p) end;p.CharacterRemoving:Connect(function() clearESPPlayer(p) end) end)
 for _,p in ipairs(Players:GetPlayers()) do if p~=LocalPlayer then p.CharacterAdded:Connect(function() onChar(p) end);if p.Character then onChar(p) end;p.CharacterRemoving:Connect(function() clearESPPlayer(p) end) end end
 
--- ========== PLAYER UTILS ==========
 local function changeTeam(pN,tN) local tp;for _,p in ipairs(Players:GetPlayers()) do if p.Name:lower()==pN:lower() then tp=p;break end end;if not tp then return false,"Oyuncu bulunamadı" end;local tt;for _,t in ipairs(game:GetService("Teams"):GetChildren()) do if t.Name:lower()==tN:lower() then tt=t;break end end;if not tt then return false,"Takım bulunamadı" end;tp.Team=tt;return true,tp.Name.." → "..tt.Name end
 local function freezePlayer(p,freeze) if not p.Character then return end;local root=p.Character:FindFirstChild("HumanoidRootPart");if not root then return end;if freeze then if FrozenPlayers[p] then return end;local bp=Instance.new("BodyPosition");bp.MaxForce=Vector3.new(4e4,4e4,4e4);bp.P=2000;bp.D=100;bp.Position=root.Position;bp.Parent=root;FrozenPlayers[p]=bp;setnetworkowner(root,LocalPlayer) else if FrozenPlayers[p] then FrozenPlayers[p]:Destroy();FrozenPlayers[p]=nil end end end
 local function stopSpectating() local c=LocalPlayer.Character;Camera.CameraSubject=(c and c:FindFirstChildOfClass("Humanoid")) or LocalPlayer end
 local function giveItem(pN,tN,count) count=count or 1;local tp;for _,p in ipairs(Players:GetPlayers()) do if p.Name:lower():find(pN:lower()) then tp=p;break end end;if not tp then return false,"Oyuncu bulunamadı" end;local found;for _,loc in ipairs({ServerStorage,ReplicatedStorage,Workspace}) do local t=loc:FindFirstChild(tN,true);if t and t:IsA("Tool") then found=t:Clone();break end end;if not found then return false,"Eşya bulunamadı" end;for i=1,count do local cl=found:Clone();local bp=tp:FindFirstChild("Backpack");if bp then cl.Parent=bp elseif tp.Character then cl.Parent=tp.Character end;task.wait(0.1) end;return true,count.."x "..tN.." → "..tp.Name end
 
--- ========== CONFIG ==========
 local function buildConfigData() return {ESP=_G.ESP,ESPBox3D=_G.ESPBox3D,ESPBox2D=_G.ESPBox2D,ShowNames=_G.ShowNames,ShowDistance=_G.ShowDistance,ShowHealthBar=_G.ShowHealthBar,ShowID=_G.ShowID,ShowTracer=_G.ShowTracer,TracerThick=_G.TracerThick,TeamCheck=_G.TeamCheck,ShowFriendly=_G.ShowFriendly,WallCheck=_G.WallCheck,SkeletonESP=_G.SkeletonESP,ESPEnemyR=_G.ESPEnemyR,ESPEnemyG=_G.ESPEnemyG,ESPEnemyB=_G.ESPEnemyB,ESPFriendR=_G.ESPFriendR,ESPFriendG=_G.ESPFriendG,ESPFriendB=_G.ESPFriendB,ESPVisR=_G.ESPVisR,ESPVisG=_G.ESPVisG,ESPVisB=_G.ESPVisB,Crosshair=_G.Crosshair,CrosshairStyle=_G.CrosshairStyle,CrosshairSize=_G.CrosshairSize,CrosshairThick=_G.CrosshairThick,CrosshairGap=_G.CrosshairGap,CrosshairAlpha=_G.CrosshairAlpha,CrosshairDot=_G.CrosshairDot,CrosshairOutline=_G.CrosshairOutline,CrosshairR=_G.CrosshairR,CrosshairG=_G.CrosshairG,CrosshairB=_G.CrosshairB,Aimbot=_G.Aimbot,RageAimbot=_G.RageAimbot,SilentAim=_G.SilentAim,AutoShoot=_G.AutoShoot,UseFOV=_G.UseFOV,FOVVisible=_G.FOVVisible,FOVSize=_G.FOVSize,AimbotSmoothness=_G.AimbotSmoothness,AimbotPartHead=_G.AimbotPartHead,AimbotPartChest=_G.AimbotPartChest,AimbotPartStomach=_G.AimbotPartStomach,FlyEnabled=_G.FlyEnabled,FlySpeed=_G.FlySpeed,NoClipEnabled=_G.NoClipEnabled,BunnyHop=_G.BunnyHop,BunnyHopSpeed=_G.BunnyHopSpeed,BunnyHopHeight=_G.BunnyHopHeight,SpeedHack=_G.SpeedHack,SpeedMultiplier=_G.SpeedMultiplier,InfiniteJump=_G.InfiniteJump,LongJump=_G.LongJump,LongJumpPower=_G.LongJumpPower,SwimHack=_G.SwimHack,KillAura=_G.KillAura,KillAuraRange=_G.KillAuraRange,AntiAFK=_G.AntiAFK,NameSpoof=_G.NameSpoof,SpoofedName=_G.SpoofedName,FullBright=_G.FullBright,NoFog=_G.NoFog,FOVChanger=_G.FOVChanger,FOVChangerVal=_G.FOVChangerVal,ThirdPerson=_G.ThirdPerson,ThirdPersonDist=_G.ThirdPersonDist,TimeChanger=_G.TimeChanger,TimeOfDay=_G.TimeOfDay,WorldColor=_G.WorldColor,WorldR=_G.WorldR,WorldG=_G.WorldG,WorldB=_G.WorldB,savedBy=USERNAME,savedAt=os.time()} end
 local function applyConfigData(data) for k,v in pairs(data) do if k~="savedBy" and k~="savedAt" then _G[k]=v end end end
 local GIST_MAP_FILE="susano_gists.json"
@@ -751,9 +752,9 @@ end
 tabBuilders["ABOUT"]=function(p)
     local sc=makeScroll(p);local lF=Instance.new("Frame",sc);lF.Size=UDim2.new(1,-28,0,80);lF.Position=UDim2.new(0,14,0,10);lF.BackgroundColor3=T.Card;corner(10,lF)
     local ll=Instance.new("TextLabel",lF);ll.Size=UDim2.new(1,0,0.6,0);ll.BackgroundTransparency=1;ll.Text="SUSANO";ll.TextColor3=T.Text;ll.Font=Enum.Font.GothamBlack;ll.TextSize=38
-    local vl=Instance.new("TextLabel",lF);vl.Size=UDim2.new(1,0,0.4,0);vl.Position=UDim2.new(0,0,0.6,0);vl.BackgroundTransparency=1;vl.Text="Version 1.0  |  "..keyType:upper().."  |  "..USERNAME;vl.TextColor3=T.TextDim;vl.Font=Enum.Font.GothamMedium;vl.TextSize=12
+    local vl=Instance.new("TextLabel",lF);vl.Size=UDim2.new(1,0,0.4,0);vl.Position=UDim2.new(0,0,0.6,0);vl.BackgroundTransparency=1;vl.Text="Version 1.0  |  "..keyType:upper().."  |  "..USERNAME.."  |  "..formatTimeLeft(keyExpires);vl.TextColor3=T.TextDim;vl.Font=Enum.Font.GothamMedium;vl.TextSize=12
     local y=104
-    for _,row in ipairs({{"Kısayol","F5 — Menü Aç/Kapat"},{"Key Sistemi","GitHub Private Repo'dan doğrulama. HWID kilitleme aktif."},{"Config","Gist ID ile paylaş, başkası direkt yükler."},{"OBS Bypass","DisplayOrder 200 — OBS'den gizli."},{"Respawn","Tüm özellikler ölünce kapanmaz."}}) do
+    for _,row in ipairs({{"Kısayol","F5 — Menü Aç/Kapat"},{"Key Sistemi","GitHub Private Repo. HWID kilitleme aktif."},{"Config","Gist ID ile paylaş."},{"OBS Bypass","DisplayOrder 200."},{"Respawn","Özellikler ölünce kapanmaz."}}) do
         local card=Instance.new("Frame",sc);card.Size=UDim2.new(1,-28,0,0);card.AutomaticSize=Enum.AutomaticSize.Y;card.Position=UDim2.new(0,14,0,y);card.BackgroundColor3=T.Card;corner(8,card)
         local tl=Instance.new("TextLabel",card);tl.Size=UDim2.new(1,0,0,20);tl.Position=UDim2.new(0,12,0,8);tl.BackgroundTransparency=1;tl.Text=string.upper(row[1]);tl.TextColor3=T.TextFaint;tl.Font=Enum.Font.GothamBold;tl.TextSize=10;tl.TextXAlignment=Enum.TextXAlignment.Left
         local bl=Instance.new("TextLabel",card);bl.Size=UDim2.new(1,-24,0,0);bl.Position=UDim2.new(0,12,0,26);bl.AutomaticSize=Enum.AutomaticSize.Y;bl.BackgroundTransparency=1;bl.Text=row[2];bl.TextColor3=T.Text;bl.Font=Enum.Font.Gotham;bl.TextSize=13;bl.TextWrapped=true;bl.TextXAlignment=Enum.TextXAlignment.Left
@@ -793,7 +794,16 @@ local function createMenu()
     local verTxt=Instance.new("TextLabel",tb);verTxt.Size=UDim2.new(0,40,1,0);verTxt.Position=UDim2.new(0,105,0,0);verTxt.BackgroundTransparency=1;verTxt.Text="v1.0";verTxt.TextColor3=T.TextFaint;verTxt.Font=Enum.Font.GothamMedium;verTxt.TextSize=11;verTxt.TextXAlignment=Enum.TextXAlignment.Left
     local kBadge=Instance.new("Frame",tb);kBadge.Size=UDim2.new(0,76,0,22);kBadge.Position=UDim2.new(0,156,0.5,-11);kBadge.BackgroundColor3=keyType=="lifetime" and T.KeyGold or (keyType=="monthly" and Color3.fromRGB(180,120,255) or (keyType=="weekly" and Color3.fromRGB(80,180,255) or T.AccentFaint));corner(5,kBadge)
     local kBL=Instance.new("TextLabel",kBadge);kBL.Size=UDim2.new(1,0,1,0);kBL.BackgroundTransparency=1;kBL.TextColor3=Color3.new(1,1,1);kBL.Font=Enum.Font.GothamBold;kBL.TextSize=11;local keyNames={daily="GÜNLÜK",weekly="HAFTALIK",monthly="AYLIK",lifetime="SINIRSIZ"};kBL.Text=keyNames[keyType] or keyType:upper()
-    local hotkeyTxt=Instance.new("TextLabel",tb);hotkeyTxt.Size=UDim2.new(0,100,1,0);hotkeyTxt.Position=UDim2.new(0.5,-50,0,0);hotkeyTxt.BackgroundTransparency=1;hotkeyTxt.Text="F5 aç/kapat";hotkeyTxt.TextColor3=T.TextFaint;hotkeyTxt.Font=Enum.Font.GothamMedium;hotkeyTxt.TextSize=11
+    -- Kalan süre göstergesi title bar'da
+    local timeLeft=Instance.new("TextLabel",tb);timeLeft.Size=UDim2.new(0,120,1,0);timeLeft.Position=UDim2.new(0,240,0,0);timeLeft.BackgroundTransparency=1;timeLeft.TextColor3=T.TextFaint;timeLeft.Font=Enum.Font.GothamMedium;timeLeft.TextSize=10;timeLeft.TextXAlignment=Enum.TextXAlignment.Left;timeLeft.Text=formatTimeLeft(keyExpires)
+    -- Her saniye güncelle
+    task.spawn(function()
+        while MainGui and MainGui.Parent do
+            timeLeft.Text=formatTimeLeft(keyExpires)
+            task.wait(60)
+        end
+    end)
+    local hotkeyTxt=Instance.new("TextLabel",tb);hotkeyTxt.Size=UDim2.new(0,80,1,0);hotkeyTxt.Position=UDim2.new(0.5,-40,0,0);hotkeyTxt.BackgroundTransparency=1;hotkeyTxt.Text="F5 aç/kapat";hotkeyTxt.TextColor3=T.TextFaint;hotkeyTxt.Font=Enum.Font.GothamMedium;hotkeyTxt.TextSize=11
     local function mkTBtn(text,bgCol,xOff) local btn=Instance.new("TextButton",tb);btn.Size=UDim2.new(0,28,0,28);btn.Position=UDim2.new(1,xOff,0.5,-14);btn.BackgroundColor3=bgCol;btn.TextColor3=Color3.new(1,1,1);btn.Font=Enum.Font.GothamBold;btn.TextSize=15;btn.Text=text;corner(6,btn);return btn end
     local closeBtn=mkTBtn("x",T.CloseRed,-36);closeBtn.MouseEnter:Connect(function() tw(closeBtn,0.1,{BackgroundColor3=Color3.fromRGB(220,70,70)}) end);closeBtn.MouseLeave:Connect(function() tw(closeBtn,0.1,{BackgroundColor3=T.CloseRed}) end);closeBtn.MouseButton1Click:Connect(function() tw(MainFrame,0.18,{BackgroundTransparency=1});task.wait(0.2);MainGui.Enabled=false;MainFrame.BackgroundTransparency=0 end)
     local minBtn=mkTBtn("-",T.MinBtn,-70);minBtn.MouseButton1Click:Connect(function() minimized=not minimized;tw(MainFrame,0.2,{Size=minimized and MENU_MINI or MENU_FULL});task.wait(0.05);SideBar.Visible=not minimized;Content.Visible=not minimized end)
@@ -868,9 +878,9 @@ end)
 -- ========== BAŞLANGIÇ ==========
 local savedKey = loadSavedKey()
 if savedKey then
-    validateKey(savedKey, function(ok, result)
+    validateKey(savedKey, function(ok, result, expires)
         if ok then
-            keyValidated=true;keyType=result;_G.Verified=true;activeKey=savedKey
+            keyValidated=true;keyType=result;keyExpires=expires;_G.Verified=true;activeKey=savedKey
             keyMenuGui:Destroy();createFOVCircle()
             task.spawn(function() task.wait(0.05);createMenu() end)
         else
