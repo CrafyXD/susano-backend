@@ -54,8 +54,10 @@ local function githubRead(path)
     local ok,resp=pcall(function()
         return (http_request or request)({Url=url,Method="GET"})
     end)
-    if not ok or not resp or not resp.Success then return false,nil end
-    return true,resp.Body
+    if not ok or not resp then return false,nil end
+    local body=resp.Body or resp.body
+    if not body or #body<2 then return false,nil end
+    return true,body
 end
 
 local function githubWrite(path,content,message)
