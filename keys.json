@@ -4,13 +4,11 @@
     "expires": 0,
     "hwid": null,
     "note": "Test key"
-  }
-}
-{
+  },
   "SUSANO-LIFE-METO": {
     "type": "lifetime",
     "expires": 0,
     "hwid": null,
-    "note": "Test key"
+    "note": "Arkadas keyi"
   }
 }
