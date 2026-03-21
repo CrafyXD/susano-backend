@@ -52,7 +52,7 @@ local function safeDel(path) if delfile then pcall(delfile,path) end end
 local function githubRead(path)
     local url=string.format("https://raw.githubusercontent.com/%s/%s/%s/%s",CFG.GITHUB_OWNER,CFG.GITHUB_REPO,CFG.GITHUB_BRANCH,path)
     local ok,resp=pcall(function()
-        return (http_request or request)({Url=url,Method="GET",Headers={["Authorization"]="token "..CFG.GITHUB_TOKEN,["Accept"]="application/vnd.github.v3.raw"}})
+        return (http_request or request)({Url=url,Method="GET"})
     end)
     if not ok or not resp or not resp.Success then return false,nil end
     return true,resp.Body
