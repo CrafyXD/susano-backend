@@ -1,12 +1,3 @@
--- Xeno uyumluluk
-pcall(function() if not getgenv then getgenv = function() return _G end end end)
-pcall(function() if not getrenv then getrenv = function() return _G end end end)
-pcall(function() if not getsenv then getsenv = function() return _G end end end)
-
-
-
-
-
 local t1 = "ghp_wG4l"
 local t2 = "OHjlmUvwum"
 local t3 = "ObSMZlppNaGyMq3H3JtpiC"
