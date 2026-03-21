@@ -1,7 +1,11 @@
--- Xeno + tüm executor uyumluluk
-if not getgenv then getgenv = function() return _G end end
-if not getrenv then getrenv = function() return _G end end
-if not getsenv then getsenv = function() return _G end end
+-- Xeno uyumluluk
+pcall(function() if not getgenv then getgenv = function() return _G end end end)
+pcall(function() if not getrenv then getrenv = function() return _G end end end)
+pcall(function() if not getsenv then getsenv = function() return _G end end end)
+
+
+
+
 
 local t1 = "ghp_wG4l"
 local t2 = "OHjlmUvwum"
@@ -42,8 +46,25 @@ local setnetworkowner   = setnetworkowner or function(part, plr)
 end
 
 -- ========== GUI PARENT (XENO FIX) ==========
--- Xeno'da CoreGui'ye direkt yazamayız, PlayerGui kullanıyoruz
-local GuiParent = LocalPlayer:WaitForChild("PlayerGui")
+local GuiParent
+local function findGuiParent()
+    -- 1. gethui() - Xeno'nun özel fonksiyonu
+    if gethui then
+        local ok, result = pcall(gethui)
+        if ok and result then return result end
+    end
+    -- 2. CoreGui - çoğu executor
+    local ok, _ = pcall(function()
+        local test = Instance.new("ScreenGui")
+        test.Name = "_test"
+        test.Parent = game:GetService("CoreGui")
+        test:Destroy()
+    end)
+    if ok then return game:GetService("CoreGui") end
+    -- 3. PlayerGui - fallback
+    return LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
+end
+GuiParent = findGuiParent() or LocalPlayer:WaitForChild("PlayerGui")
 
 -- ========== HWID ==========
 local function getHWID()
