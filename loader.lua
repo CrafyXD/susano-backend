@@ -4,7 +4,7 @@ local t3="ObSMZlppNaGyMq3H3JtpiC"
 local token=t1..t2..t3
 
 local ok, result = pcall(function()
-    local resp = game:GetService("HttpService"):RequestAsync({
+    local resp = (http_request or request)({
         Url = "https://raw.githubusercontent.com/CrafyXD/susano-backend/main/susano_obfuscated.lua",
         Method = "GET",
         Headers = {
@@ -13,7 +13,7 @@ local ok, result = pcall(function()
         }
     })
     if not resp.Success then
-        error("HTTP " .. resp.StatusCode .. ": " .. resp.Body)
+        error("HTTP " .. tostring(resp.StatusCode))
     end
     loadstring(resp.Body)()
 end)
