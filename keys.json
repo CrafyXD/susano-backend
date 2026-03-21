@@ -2,20 +2,17 @@
   "SUSANO-LIFE-DEMO1": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null,
-    "note": "Ozel key 1"
+    "hwid": null
   },
   "SUSANO-LIFE-METO": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null,
-    "note": "Ozel key 2"
+    "hwid": null
   },
   "SUSANO-LIFE-WESTRA": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null,
-    "note": "Ozel key 3"
+    "hwid": null
   },
   "feEpXfqzHEMqIgKTqlhyVJpGKoCaPXaw": {
     "type": "lifetime",
