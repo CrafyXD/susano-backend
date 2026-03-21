@@ -3,12 +3,39 @@
     "type": "lifetime",
     "expires": 0,
     "hwid": null,
-    "note": "Test key"
+    "note": "Ozel key 1"
   },
   "SUSANO-LIFE-METO": {
     "type": "lifetime",
     "expires": 0,
     "hwid": null,
-    "note": "Arkadas keyi"
+    "note": "Ozel key 2"
+  },
+    },
+  "SUSANO-LIFE-WESTRA": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "note": "Ozel key 2"
+  },
+  "feEpXfqzHEMqIgKTqlhyVJpGKoCaPXaw": { 
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null
+  },
+  "CCnAzYWuOfvQmnkmWQodUWqgpWQmmZDv": {
+    "type": "monthly",
+    "expires": 1776694547,
+    "hwid": null
+  },
+  "GIULvfWhwGCkJjlJYLBeVELDcsGTtBHr": {
+    "type": "weekly",
+    "expires": 1774707347,
+    "hwid": null
+  },
+  "nMHJSucoBFYCeJPaAfAWpjERtXMgygZM": {
+    "type": "daily",
+    "expires": 1774188947,
+    "hwid": null
   }
 }
