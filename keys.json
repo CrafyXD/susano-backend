@@ -11,14 +11,13 @@
     "hwid": null,
     "note": "Ozel key 2"
   },
-    },
   "SUSANO-LIFE-WESTRA": {
     "type": "lifetime",
     "expires": 0,
     "hwid": null,
-    "note": "Ozel key 2"
+    "note": "Ozel key 3"
   },
-  "feEpXfqzHEMqIgKTqlhyVJpGKoCaPXaw": { 
+  "feEpXfqzHEMqIgKTqlhyVJpGKoCaPXaw": {
     "type": "lifetime",
     "expires": 0,
     "hwid": null
