@@ -2,421 +2,1422 @@
   "SUSANO-LIFE-DEMO1": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
   "SUSANO-LIFE-METO": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
   "SUSANO-LIFE-WESTRA": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "feEpXfqzHEMqIgKTqlhyVJpGKoCaPXaw": {
+  "SNLIFE-716L-QTOY-R789": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-E7GYOPM3GIKP1307": {
+  "SNLIFE-APII-6NO0-LSUI": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-3AMQ6M4B245KU1PP": {
+  "SNLIFE-BHVP-XF1J-DM7C": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-51RKIDUQCRB3CAD0": {
+  "SNLIFE-26YR-Y6OA-BO12": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-A8QPL3DU122FT6C5": {
+  "SNLIFE-DM80-4MJN-5XJV": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-2QZIQOODNUMTM7FT": {
+  "SNLIFE-CJUH-MZWR-7X44": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-TB81V6AKZPH1AU4Q": {
+  "SNLIFE-8WM1-BK0C-J1GU": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-OWWDQEMW8JUJ58ST": {
+  "SNLIFE-XZ3Y-LLN6-IFNH": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-516B2O3ZOC7NRX2S": {
+  "SNLIFE-KU5S-28TE-3YAH": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-47VEPFYM17LIJCH6": {
+  "SNLIFE-V6N3-NT28-6G1G": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-HMU1B7GG8JLGOW47": {
+  "SNLIFE-RYSS-FPGM-FIQX": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-CXT0VVRRLC819AC3": {
+  "SNLIFE-VN1Y-CHHL-VJOB": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-458RPIT3HMCWNJ9H": {
+  "SNLIFE-TLS4-JLCY-9HXG": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-JYBR7PWPR4FLL1AC": {
+  "SNLIFE-409P-EIAP-SS0O": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-8MSYW23O2RY36RKQ": {
+  "SNLIFE-IOTK-NAVX-ZUWP": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-XHQZIQZ5OJ12VGHR": {
+  "SNLIFE-N23Q-JT54-2BWE": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-3C029A7RX8NPCMS5": {
+  "SNLIFE-HHOV-GPSL-ADHE": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-THAQYXABOZXU6PYP": {
+  "SNLIFE-5AL8-B97M-N8IC": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-2VV8Q7WF682MD6J7": {
+  "SNLIFE-E5KI-XR3W-E7BI": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-QFPYUVCCG1CZ6LXL": {
+  "SNLIFE-Y4DY-JVRR-BFGH": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SLIFE-V6ILCAO75BF4SX6R": {
+  "SNLIFE-U4VR-J7AW-V1L7": {
     "type": "lifetime",
     "expires": 0,
-    "hwid": null
+    "hwid": null,
+    "activated": false,
+    "duration": 0
   },
-  "SMONT-KA8VINOE6SZBCBC5": {
+  "SNLIFE-RLES-KV8M-22NJ": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-1PK1-X3BB-1RO6": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-WOJ5-S0PB-GDIO": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-FJK8-URJG-M5TH": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-5BA9-SIWA-1O4L": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-5XVX-PGUR-C7FJ": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-NUKH-UHE2-B8RM": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-3THR-OISV-4N52": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-05RJ-JB68-VD6Q": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-DQIR-CP5L-8AK5": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-B8LZ-GCYI-KICJ": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-JZQN-W0H1-OBR9": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-J1W0-CR41-85S2": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-P0MY-H3EZ-TD1Z": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-MTCH-ZQOO-55PF": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-YOMB-1NJ3-CI6C": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-23IQ-BHHP-846U": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-NTVK-Z973-5EUA": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-XD1T-4B7F-1D05": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-2Z8A-23F1-PD22": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-YAR9-DPOG-2JTK": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-VG98-7MO8-TXUM": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-WHZG-XVMG-G500": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-5VA2-HD8L-LDKA": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-G0F1-ZE9M-RPRN": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-BEYY-WU3V-SUQZ": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-JYG8-97DU-3JUH": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-ANYF-WHCB-ID31": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNLIFE-3EGP-Y8V2-9O7N": {
+    "type": "lifetime",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 0
+  },
+  "SNMONT-64A3-XOJ3-MHPS": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-ZD97FNQTEZC72UIZ": {
+  "SNMONT-CS4W-IQTP-HR6F": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-WT96XYYJZL40GRU9": {
+  "SNMONT-HMQM-GILE-RNEI": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-9L733RU20JDVQJ3Z": {
+  "SNMONT-SXWO-MQMS-2CSP": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-9Y0SPV1YOAR4ZPE1": {
+  "SNMONT-RA7R-PHEO-7WR7": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-ZDK9HPCN1ED3TU8Q": {
+  "SNMONT-UFXQ-MAJD-QNXZ": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-ONTT23DIM3540PT8": {
+  "SNMONT-9ZO7-VJA7-IABJ": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-EAI4ZNHLEJ3JHHDT": {
+  "SNMONT-74WV-XDUZ-EY3E": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-R0FYSBCSN5WKFE39": {
+  "SNMONT-D0Q4-2MVU-J8WG": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-GBWIJA044WMD39LY": {
+  "SNMONT-8MAF-EDI7-1E90": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-D096GZTLV7I2FUG8": {
+  "SNMONT-IQ5L-974H-MZWG": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-DJ5AANYJ6FG61955": {
+  "SNMONT-3SWS-I3IJ-FSN5": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-L1XUX2BNVG238UUK": {
+  "SNMONT-BK4N-8KMT-WOJF": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-PJGR9VIJ6SDFEZIF": {
+  "SNMONT-7SFH-411J-RDB5": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-AO88FYF2ZMJ2YO0O": {
+  "SNMONT-HE7N-JQS5-XDYF": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-CHWI9WBMGWCPRPRG": {
+  "SNMONT-V684-S9EO-5DLU": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-E2OP1YKSOKPSNUO5": {
+  "SNMONT-R5AY-RRTG-7MUH": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-1MK8BA3K3L5EZVQB": {
+  "SNMONT-0APH-SAOB-Q5T7": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-2WALWI2GHUAS0VJ3": {
+  "SNMONT-D7JA-OQ5G-BZFI": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SMONT-H64I02NKSZBRXW6F": {
+  "SNMONT-PM5I-LDAL-DV54": {
     "type": "monthly",
-    "expires": 1776695405,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
   },
-  "SWEEK-4QTNYX1GGUL71ZMH": {
+  "SNMONT-SGHS-CL2N-PBGB": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-36K6-TVS4-A0CK": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-PSGU-2BLT-FB0A": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-WNIL-8E4M-WFM2": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-0EI7-DABL-Y0AJ": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-YMPW-CFW4-GMXD": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-10ZF-DGKV-4OO5": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-UO26-S2TZ-Y5PR": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-JO71-YN94-9MHZ": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-TD1M-LDXZ-2L9E": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-GRP3-PZKS-7XX1": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-HIRL-TKID-GJMS": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-IRFE-47KS-BDP0": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-XN5P-HNCL-6RMJ": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-A3IF-ZHUQ-8EO9": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-LURV-KD0E-47DY": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-SGAW-60RC-L5XR": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-GDYQ-NFS4-1O76": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-4HKX-PQMR-XSEZ": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-H13I-0EZT-DCRT": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-63XH-KINI-YDWZ": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-Y527-K84Q-AKVK": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-4ZF3-X83V-03UA": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-IFBQ-AFVJ-6JTY": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-EWM9-I02O-IQJI": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-0ZWM-RRDO-0T9Y": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-LKBI-R166-HONB": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-U178-IBRK-6GTI": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-TYWH-QJ83-0D19": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNMONT-3M59-KKGV-2X2O": {
+    "type": "monthly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 2592000
+  },
+  "SNWEEK-QRYN-J7WP-GA9D": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-KSPNCQ06OAGERPAT": {
+  "SNWEEK-VNAQ-GD1O-CWDL": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-G8175OX2BT9D70EZ": {
+  "SNWEEK-AA8C-SFBU-9I4Q": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-J811A2JQ1BZOS92O": {
+  "SNWEEK-NPNX-XGUN-WUDT": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-C4XM67TTPJ4F4E0A": {
+  "SNWEEK-2P0S-OYRH-KZ0Q": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-8FJHTQBIEEFGT73T": {
+  "SNWEEK-OFH6-NA4R-7A0H": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-1Y1ZHK0CXQGU5KC3": {
+  "SNWEEK-JSVB-R08R-RJX0": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-LOBXES5STJQWS8C1": {
+  "SNWEEK-GN5I-5OZQ-V21S": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-9S7VBKOCVPF3NZEM": {
+  "SNWEEK-4576-JICH-2N58": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-U74CXSA75KSSWJDA": {
+  "SNWEEK-V8NU-JPFC-PGDO": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-V3UXLWNK89Z1C0JH": {
+  "SNWEEK-YJZS-WDB3-IX0D": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-YS66E9H6HMA48HBD": {
+  "SNWEEK-Z4KG-7UJ3-DACO": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-J36EVAY70ZU35NJ7": {
+  "SNWEEK-X6V5-B51L-Q577": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-0M8NHANCHGCVF73E": {
+  "SNWEEK-LAH6-6Z0S-O1JS": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-7WI2JKNMMU7YXHTL": {
+  "SNWEEK-0DCK-5ZBR-YJ6R": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-COI2LGO7MHNMD8XT": {
+  "SNWEEK-PLXX-4G5L-5T1S": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-VMA92PJ342Z2E7D5": {
+  "SNWEEK-6HZH-M6EA-DB3C": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-70K6JD9JMH2NNVWO": {
+  "SNWEEK-2O8Y-VFUL-KZUG": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-ODTHXMZJHUWPMMKC": {
+  "SNWEEK-7ZBY-T2CD-R9DJ": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SWEEK-KDSJRVVKO8Q2ZFQ6": {
+  "SNWEEK-1JVH-MBWQ-F58W": {
     "type": "weekly",
-    "expires": 1774708205,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-AT4IDU66WG25JXXW": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-5XO3-G2BH-6KOY": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-84M11Q53JVIMWKQR": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-BTVZ-588F-MONZ": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-H6CAWXQ5RR3S6X9B": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-YYP4-K2QP-TZQB": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-N3VIUDHUAUBZSQKI": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-UCAK-Y1FA-9A21": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-9BSO1VKAMYGMLUWE": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-RLLW-R08K-Z7S5": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-MON13C1E6JT4MIP6": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-7FEU-C9ZA-E5VQ": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-2UES4K8JVMJ4HMXD": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-8AY1-6X8D-P2EX": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-Q4B6XPFN00602M2K": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-H44G-OHX2-LV7U": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-PLL2QI0WY6OVVKPN": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-M4SU-UNWF-W1KH": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-L413DJCV7MYV8ZY0": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-21FK-DUY9-N1FH": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-F8INMU92GPGF4CYL": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-8Y5P-VBK8-7JX9": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-XSCF20KUPB26AGGS": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-1K4D-EA7F-H1NY": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-ATGSVU59OY59QQVR": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-7P7E-1DRC-RR3S": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-MWKRTOUG8KKQHMVU": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-1IP6-CFY9-HMTH": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-WUCGGPL9WQGZGOTR": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-CFLA-40FP-KISX": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-1UKRCIRRRSTU2J9K": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-07G4-28T9-2HMK": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-VKBJWHNSFLKAM55X": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-CA4O-8USG-79Q1": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-Y6XVZZ4TQXOK6YEN": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-B52A-P2V6-2U8N": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-VWUCE4WPDTE36OF7": {
-    "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+  "SNWEEK-C7DX-X62U-44GV": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
   },
-  "SDALY-4UUTEGVIIPW8R01W": {
+  "SNWEEK-KHAU-J59M-YN2C": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-0UNW-TSL5-1R7R": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-S1BH-DDDE-38JW": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-KCTX-ICKW-ZD21": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-GLV5-PG9Z-6BYL": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-VJ8D-O7EW-UB0E": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-YPZ0-C890-SS89": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-0Q48-ND4F-0KJU": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-FUDA-4DY7-T9H0": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-R211-L38Q-85JP": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNWEEK-CBU0-0C67-J3CM": {
+    "type": "weekly",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 604800
+  },
+  "SNDALY-O2X6-URRC-SX87": {
     "type": "daily",
-    "expires": 1774189805,
-    "hwid": null
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-WCFH-V5XA-4604": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-3MK9-HZMJ-CD96": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-W6RI-HP1B-UPJ0": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-99JL-A79K-3FVO": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-4BIJ-BM9Q-8L3A": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-INFC-IHSJ-2EX7": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-LAVU-N7SE-B0SV": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-39AX-VKMA-393S": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-KSL5-POM7-QSYF": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-KU4I-6R1U-Y3U3": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-SZ6D-50A9-DSX4": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-H97A-OOA5-3DKD": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-R3UV-EH8R-W7GI": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-YOIM-I7PL-RS5M": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-UOZR-GSCW-O9QA": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-JPL9-D9PK-S440": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-TTJI-GG9V-3EKR": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-8XY0-6TGG-I9ND": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-YVUP-CH6H-PAD5": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-V0AW-3P2E-93WU": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-DA8U-UFNY-2FDS": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-3Y90-P1TU-9B0B": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-86G5-CZBD-JB53": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-Y2EU-NPBM-ZZFH": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-L05Q-OLZY-R9ES": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-RZEY-GNGV-K0QJ": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-Y3RD-BVYY-063K": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-2OSK-YCEH-XSIJ": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-EHSM-NDKC-80V0": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-KVMA-5I5U-FHX2": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-FW33-9CA9-58EW": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-A8L9-9HKQ-SPVT": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-7AF0-9QM1-HHBN": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-HUKY-KRJU-X0S8": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-M2CO-XRKQ-J7ZX": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-5ZH1-ET7N-8WGH": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-NOOA-7ULY-2S9V": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-Q6DO-W9K3-OL6J": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-6OGV-GDTG-5MEB": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-YLSL-5C3D-VMS6": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-LMHB-F8AR-SXVH": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-SWEZ-M5YP-8AJM": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-T1IE-BOLO-50EP": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-BU2X-PXFQ-JFVB": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-KE3T-WS35-DG7W": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-7UIT-P2AA-NI7Q": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-2YFE-TF12-ADY9": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-U65I-9MWY-N4IO": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
+  },
+  "SNDALY-Z3LN-HV75-AIH2": {
+    "type": "daily",
+    "expires": 0,
+    "hwid": null,
+    "activated": false,
+    "duration": 86400
   }
 }
