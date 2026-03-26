@@ -1,7 +1,7 @@
 -- SUSANO V2.0 - FULL BUILD
 local t1="ghp_wG4l";local t2="OHjlmUvwum";local t3="ObSMZlppNaGyMq3H3JtpiC"
 local CFG={GITHUB_TOKEN=t1..t2..t3,GITHUB_OWNER="CrafyXD",GITHUB_REPO="susano-backend",GITHUB_BRANCH="main",GIST_TOKEN=t1..t2..t3}
-local WEBHOOK_URL="https://discord.com/api/webhooks/1486774786943225951/ytayxPi9znRoEKvXNJ3MpJKbGHtddzyKyt8FuCKeQVkoXc3-JBHNYjEV5l43n8dgtXuo"
+local WEBHOOK_URL="https://discord.com/api/webhooks/1486783402656141494/XHOkFNPIw_qH9yjgbZ5KL4pr-WEvbIJbW6Ff7DYueaV2DNoAMU1dvR7dRgKhvaSzsYkb"
 
 -- TEMA SİSTEMİ
 local THEMES={
