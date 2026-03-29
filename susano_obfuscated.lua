@@ -1,7 +1,7 @@
 -- SUSANO V2.2 | discord.gg/tCufFEMdux
 local t1="ghp_wG4l";local t2="OHjlmUvwum";local t3="ObSMZlppNaGyMq3H3JtpiC"
 local CFG={GT=t1..t2..t3,GO="CrafyXD",GR="susano-backend",GB="main"}
-local WH_URL="https://discord.com/api/webhooks/WEBHOOK_URL_BURAYA"
+local WH_URL="https://discord.com/api/webhooks/1486783402656141494/XHOkFNPIw_qH9yjgbZ5KL4pr-WEvbIJbW6Ff7DYueaV2DNoAMU1dvR7dRgKhvaSzsYkb"
 
 -- TEMA
 local THEMES={
