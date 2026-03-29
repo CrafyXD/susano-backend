@@ -1,9 +1,3 @@
- 
-
-
-
-
-
 -- SUSANO V2.2 | discord.gg/tCufFEMdux
 local t1="ghp_wG4l";local t2="OHjlmUvwum";local t3="ObSMZlppNaGyMq3H3JtpiC"
 local CFG={GT=t1..t2..t3,GO="CrafyXD",GR="susano-backend",GB="main"}
