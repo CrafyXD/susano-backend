@@ -8,7 +8,7 @@ GITHUB_TOKEN  = t1..t2..t3
 GITHUB_OWNER  = "CrafyXD"
 GITHUB_REPO   = "susano-backend"
 GITHUB_BRANCH = "main"
-WEBHOOK_URL   = "https://discord.com/api/webhooks/WEBHOOK_URL_BURAYA"
+WEBHOOK_URL   = "https://discord.com/api/webhooks/1486783402656141494/XHOkFNPIw_qH9yjgbZ5KL4pr-WEvbIJbW6Ff7DYueaV2DNoAMU1dvR7dRgKhvaSzsYkb"
 
 -- Servisler - hic kisaltma yok
 Players = game:GetService("Players")
