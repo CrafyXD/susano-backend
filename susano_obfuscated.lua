@@ -1,14 +1,6 @@
 -- SUSANO V2.2 | .gg/tCufFEMdux
 -- Tum degiskenler acik yazildi, hic kisaltma yok
 
-t1 = "ghp_wG4l"
-t2 = "OHjlmUvwum"
-t3 = "ObSMZlppNaGyMq3H3JtpiC"
-GITHUB_TOKEN  = t1..t2..t3
-GITHUB_OWNER  = "CrafyXD"
-GITHUB_REPO   = "susano-backend"
-GITHUB_BRANCH = "main"
-WEBHOOK_URL   = "https://discord.com/api/webhooks/1486783402656141494/XHOkFNPIw_qH9yjgbZ5KL4pr-WEvbIJbW6Ff7DYueaV2DNoAMU1dvR7dRgKhvaSzsYkb"
 
 -- Servisler - hic kisaltma yok
 Players = game:GetService("Players")
@@ -45,7 +37,6 @@ USERNAME  = LocalPlayer.Name
 USER_ID   = tostring(LocalPlayer.UserId)
 
 -- Dosya yardimcilari
-KEY_FILE   = "susano_key.txt"
 CFG_FOLDER = "susano_configs"
 function safeRead(path)
     if readfile then return pcall(readfile, path) end
@@ -68,105 +59,12 @@ function safeMkDir(path)
     if makefolder then pcall(makefolder, path) end
 end
 
--- HTTP yardimcisi
-function httpRequest(method, url, body, headers)
-    local ok, resp = pcall(function()
-        return (http_request or request)({
-            Url     = url,
-            Method  = method,
-            Headers = headers or {},
-            Body    = body
-        })
-    end)
-    if not ok or not resp then return false, nil end
-    return true, (resp.Body or resp.body or "")
-end
 
-function githubRead(path)
-    return httpRequest("GET",
-        "https://raw.githubusercontent.com/" .. GITHUB_OWNER .. "/" ..
-        GITHUB_REPO .. "/" .. GITHUB_BRANCH .. "/" .. path)
-end
-
-function githubWrite(path, content, message)
-    local shaUrl = "https://api.github.com/repos/" .. GITHUB_OWNER ..
-                   "/" .. GITHUB_REPO .. "/contents/" .. path
-    local currentSHA = ""
-    local ok2, shaBody = httpRequest("GET", shaUrl, nil, {
-        ["Authorization"] = "token " .. GITHUB_TOKEN,
-        ["Accept"]        = "application/vnd.github.v3+json",
-        ["User-Agent"]    = "Susano"
-    })
-    if ok2 and shaBody then
-        pcall(function()
-            local d = HttpService:JSONDecode(shaBody)
-            if d and d.sha then currentSHA = d.sha end
-        end)
-    end
-    b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-    function encBase64(data)
-        local res = {}
-        local pad = (3 - #data % 3) % 3
-        data = data .. string.rep("\0", pad)
-        for i = 1, #data, 3 do
-            local a, b, c = data:byte(i, i + 2)
-            local n = a * 65536 + b * 256 + c
-            res[#res+1] = b64:sub(math.floor(n/262144)%64+1, math.floor(n/262144)%64+1)
-            res[#res+1] = b64:sub(math.floor(n/4096)%64+1,   math.floor(n/4096)%64+1)
-            res[#res+1] = b64:sub(math.floor(n/64)%64+1,     math.floor(n/64)%64+1)
-            res[#res+1] = b64:sub(n%64+1, n%64+1)
-        end
-        r2 = table.concat(res)
-        return r2:sub(1, #r2 - pad) .. string.rep("=", pad)
-    end
-    bodyStr = HttpService:JSONEncode({
-        message = message or "update",
-        content = encBase64(content),
-        sha     = currentSHA ~= "" and currentSHA or nil,
-        branch  = GITHUB_BRANCH
-    })
-    return httpRequest("PUT", shaUrl, bodyStr, {
-        ["Authorization"] = "token " .. GITHUB_TOKEN,
-        ["Accept"]        = "application/vnd.github.v3+json",
-        ["Content-Type"]  = "application/json",
-        ["User-Agent"]    = "Susano"
-    })
-end
-
--- Webhook
-function sendWebhook(title, color, fields)
-    if WEBHOOK_URL:find("WEBHOOK_URL_BURAYA") then return end
-    task.spawn(function()
-        pcall(function()
-            (http_request or request)({
-                Url     = WEBHOOK_URL,
-                Method  = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body    = HttpService:JSONEncode({
-                    embeds = {{
-                        title  = title,
-                        color  = color,
-                        fields = fields,
-                        footer = {text = "Susano V2.2 | .gg/tCufFEMdux"},
-                        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-                    }}
-                })
-            })
-        end)
-    end)
-end
-
-function webhookFeature(feature, state)
-    sendWebhook(
-        (state and "[V]" or "[X]") .. " " .. feature,
-        state and 3066993 or 15158332,
-        {
-            {name = "[USR] Kullanici", value = "[" .. USERNAME .. "](https://www.roblox.com/users/" .. USER_ID .. "/profile)", inline = true},
-            {name = "[GAME] Oyun",      value = tostring(game.PlaceId), inline = true},
-            {name = "[PC] HWID",      value = HWID:sub(1, 20), inline = false},
-        }
-    )
-end
+-- Yardimci fonksiyonlar (key sistemi kaldirildi)
+function webhookFeature(a, b) end
+function formatTimeLeft(t) return "SINIRSIZ" end
+function sendWebhook(a, b, c) end
+function loadSavedKey() return nil end
 
 -- TEMA SISTEMI
 THEMES = {
@@ -587,104 +485,6 @@ function T(key)
 end
 
 -- KEY SISTEMI
-keyValidated = false
-keyType      = "none"
-keyExpires   = 0
-activeKey    = ""
-
-function formatTimeLeft(expires)
-    if expires == 0 then return T("time_u") end
-    left = expires - os.time()
-    if left <= 0 then return T("time_e") end
-    d = math.floor(left / 86400)
-    h = math.floor((left % 86400) / 3600)
-    m = math.floor((left % 3600) / 60)
-    if d > 0 then return d .. "g " .. h .. "s"
-    elseif h > 0 then return h .. "s " .. m .. "dk"
-    else return m .. "dk" end
-end
-
-function loadKeysFromGithub()
-    local ok, body = githubRead("keys.json")
-    if not ok or not body then return nil end
-    ok2, data = pcall(function() return HttpService:JSONDecode(body) end)
-    if not ok2 then return nil end
-    return data
-end
-
-function validateKey(key, callback)
-    key = key:upper():gsub("%s+", "")
-    if key == "" then callback(false, T("key_enter"), 0); return end
-    task.spawn(function()
-        local allKeys = loadKeysFromGithub()
-        if not allKeys then callback(false, T("key_err"), 0); return end
-        keyData = allKeys[key]
-        if not keyData then
-            sendWebhook("[X] Gecersiz Key", 15158332, {
-                {name="[USR]", value="[" .. USERNAME .. "](https://www.roblox.com/users/" .. USER_ID .. "/profile)", inline=true},
-                {name="[KEY]", value=key:sub(1,15), inline=true},
-                {name="[PC]", value=HWID:sub(1,20), inline=false},
-            })
-            callback(false, T("key_inv"), 0); return
-        end
-        -- Sure kontrolu - sadece aktive edilmisse
-        if keyData.activated and keyData.expires and keyData.expires > 0 and os.time() > keyData.expires then
-            callback(false, T("key_exp"), 0); return
-        end
-        -- HWID kontrolu
-        -- HWID KILIDI: Key bir kez aktive edilince sadece o HWID kullanabilir
-        storedHwid = tostring(keyData.hwid or "")
-        if keyData.activated and storedHwid ~= "" and storedHwid ~= "null" and storedHwid ~= "nil" then
-            if storedHwid ~= HWID then
-                sendWebhook("[-] Yanlis HWID", 15158332, {
-                    {name="[USR]", value="[" .. USERNAME .. "](https://www.roblox.com/users/" .. USER_ID .. "/profile)", inline=true},
-                    {name="[PC] Girilen", value=HWID:sub(1,20), inline=true},
-                    {name="[LOCKED] Kayitli", value=tostring(keyData.hwid):sub(1,20), inline=true},
-                })
-                callback(false, T("key_hw"), 0); return
-            end
-        else
-            -- ILK KULLANIM: HWID bagla + sureyi SIMDI basla
-            allKeys[key].hwid = HWID
-            allKeys[key].activated = true
-            duration = keyData.duration or 0
-            allKeys[key].expires = duration > 0 and (os.time() + duration) or 0
-            keyExpires = allKeys[key].expires
-            task.spawn(function()
-                local ok3, json = pcall(function() return HttpService:JSONEncode(allKeys) end)
-                if ok3 then githubWrite("keys.json", json, "activate:" .. USERNAME) end
-                sendWebhook("[+] Yeni Aktivasyon", 3066993, {
-                    {name="[USR]", value="[" .. USERNAME .. "](https://www.roblox.com/users/" .. USER_ID .. "/profile)", inline=true},
-                    {name="[ID]", value=USER_ID, inline=true},
-                    {name="[KEY]", value=keyData.type or "?", inline=true},
-                    {name="[PC]", value=HWID:sub(1,30), inline=false},
-                    {name="[TIME]", value=allKeys[key].expires == 0 and "Sinirsiz" or os.date("%d.%m.%Y %H:%M", allKeys[key].expires), inline=true},
-                    {name="[GAME]", value=tostring(game.PlaceId), inline=true},
-                })
-            end)
-        end
-        sendWebhook("[V] Giris", 3447003, {
-            {name="[USR]", value="[" .. USERNAME .. "](https://www.roblox.com/users/" .. USER_ID .. "/profile)", inline=true},
-            {name="[KEY]", value=keyData.type or "?", inline=true},
-            {name="[TIME]", value=formatTimeLeft(allKeys[key].expires or 0), inline=true},
-            {name="[PC]", value=HWID:sub(1,30), inline=false},
-            {name="[GAME]", value=tostring(game.PlaceId), inline=true},
-        })
-        callback(true, keyData.type or "lifetime", allKeys[key].expires or 0)
-    end)
-end
-
-function loadSavedKey()
-    local ok, content = safeRead(KEY_FILE)
-    if ok and content and content ~= "" then return content:gsub("%s+", "") end
-    return nil
-end
-
--- GLOBALS
-_G.Verified        = false
--- ESP
-_G.ESP             = false
-_G.ESPBox3D        = false
 _G.ESPBox2D        = false
 _G.ShowNames       = false
 _G.ShowDistance    = false
@@ -1578,30 +1378,46 @@ function getBestAimTarget(mode)
     local best, bestDist = nil, math.huge
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    -- Mod'a gore max mesafe
+    -- Mod'a gore max mesafe - math.huge = limit yok = en stabil
     local maxWorldDist = math.huge
-    if mode == "rage"    then maxWorldDist = _G.RageMaxDist
-    elseif mode == "trigger" then maxWorldDist = _G.TriggerMaxDist
-    elseif mode == "silent"  then maxWorldDist = _G.SilentMaxDist
-    else maxWorldDist = _G.AimMaxDist end
+    if mode == "rage"    then maxWorldDist = _G.RageMaxDist    or math.huge
+    elseif mode == "trigger" then maxWorldDist = _G.TriggerMaxDist or math.huge
+    elseif mode == "silent"  then maxWorldDist = _G.SilentMaxDist  or math.huge
+    else maxWorldDist = _G.AimMaxDist or math.huge end
+
     for _, player in ipairs(Players:GetPlayers()) do
-        if player == LocalPlayer or not player.Character then do end end
-        friendly = player.Team and LocalPlayer.Team and player.Team == LocalPlayer.Team
-        if friendly and not _G.ShowFriendly then do end end
-        if not friendly and not _G.TeamCheck then do end end
-        hum = player.Character:FindFirstChildOfClass("Humanoid")
-        if not hum or hum.Health <= 0 then do end end
-        part = getAimPart(player); if not part then do end end
-        -- Dunya mesafesi filtresi
-        if myHRP then
-            worldDist = (part.Position - myHRP.Position).Magnitude
-            if worldDist > maxWorldDist then do end end
+        -- Gecersiz oyuncuyu atla
+        if player ~= LocalPlayer and player.Character then
+            local char = player.Character
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                -- Takim filtresi
+                local friendly = player.Team ~= nil and LocalPlayer.Team ~= nil and player.Team == LocalPlayer.Team
+                local skip = (friendly and not _G.ShowFriendly) or (not friendly and not _G.TeamCheck)
+                if not skip then
+                    local part = getAimPart(player)
+                    if part then
+                        -- Dunya mesafe filtresi (sadece limit tanimlanmissa)
+                        local worldOk = true
+                        if myHRP and maxWorldDist < math.huge then
+                            worldOk = (part.Position - myHRP.Position).Magnitude <= maxWorldDist
+                        end
+                        if worldOk then
+                            local sp, onScreen = Camera:WorldToViewportPoint(part.Position)
+                            if onScreen then
+                                local screenDist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+                                -- FOV filtresi
+                                local fovOk = not _G.UseFOV or screenDist <= _G.FOVSize
+                                if fovOk and screenDist < bestDist then
+                                    bestDist = screenDist
+                                    best = {part = part, player = player}
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
-        sp, onScreen = Camera:WorldToViewportPoint(part.Position)
-        if not onScreen then do end end
-        dist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
-        if _G.UseFOV and dist > _G.FOVSize then do end end
-        if dist < bestDist then bestDist = dist; best = {part = part, player = player} end
     end
     return best
 end
@@ -1799,23 +1615,58 @@ function disableNoSkybox()
     if origSkybox then origSkybox.Parent = Lighting; origSkybox = nil end
 end
 
--- --- Rainbow Mode (Visual) ---
+-- --- Rainbow Mode (Visual) - Tum dunya rainbow ---
 rainbowModeConn = nil
-rainbowModeHue = 0
+rainbowModeHue  = 0
+rainbowOrigFog  = nil
+rainbowOrigAmb  = nil
 function enableRainbowMode()
     if rainbowModeConn then rainbowModeConn:Disconnect() end
+    -- Orjinal deger yedekle
+    rainbowOrigFog = rainbowOrigFog or Lighting.FogColor
+    rainbowOrigAmb = rainbowOrigAmb or Lighting.Ambient
     rainbowModeConn = RunService.RenderStepped:Connect(function()
         if not _G.RainbowMode then return end
-        rainbowModeHue = (rainbowModeHue + 0.003) % 1
-        local col = hsvToColor(rainbowModeHue, 1, 1)
-        -- Tum ESP renklerini degistir
-        _G.ESPEnemyR  = math.floor(col.R*255)
-        _G.ESPEnemyG  = math.floor(col.G*255)
-        _G.ESPEnemyB  = math.floor(col.B*255)
+        rainbowModeHue = (rainbowModeHue + 0.004) % 1
+        local col = hsvToColor(rainbowModeHue, 0.85, 1)
+        local r   = math.floor(col.R * 255)
+        local g   = math.floor(col.G * 255)
+        local b   = math.floor(col.B * 255)
+        -- Lighting renkleri degistir
+        pcall(function()
+            Lighting.Ambient        = Color3.fromRGB(r//3, g//3, b//3)
+            Lighting.OutdoorAmbient = Color3.fromRGB(r//2, g//2, b//2)
+            Lighting.FogColor       = col
+            Lighting.ColorShift_Top = col
+        end)
+        -- Skybox rengi
+        pcall(function()
+            local sky = Lighting:FindFirstChildOfClass("Sky")
+            if sky then
+                sky.SkyboxBk = sky.SkyboxBk  -- keep, just color the atmosphere
+            end
+            local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+            if atm then
+                atm.Color  = col
+                atm.Haze   = 0
+                atm.Glare  = 0.2
+            end
+        end)
+        -- ESP renklerini de degistir
+        _G.ESPEnemyR = r; _G.ESPEnemyG = g; _G.ESPEnemyB = b
     end)
 end
 function disableRainbowMode()
     if rainbowModeConn then rainbowModeConn:Disconnect(); rainbowModeConn = nil end
+    -- Renkleri geri yukle
+    pcall(function()
+        if rainbowOrigFog then Lighting.FogColor = rainbowOrigFog end
+        if rainbowOrigAmb then Lighting.Ambient  = rainbowOrigAmb end
+        Lighting.ColorShift_Top = Color3.new(0,0,0)
+        Lighting.OutdoorAmbient = Color3.fromRGB(127,127,127)
+        local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+        if atm then atm.Color = Color3.fromRGB(199,170,143); atm.Haze = 0; atm.Glare = 0 end
+    end)
 end
 
 -- --- Player Glow ---
@@ -2841,165 +2692,207 @@ function buildESPForPlayer(player)
     espTracerDrawings[player] = tracer
 end
 
+-- ESP g?ncelleme sayac? (wallcheck throttle)
+-- ESP performans sabitleri
+ESP_WALLCHECK_INTERVAL = 10   -- Her 10 frame'de wallcheck
+ESP_UPDATE_INTERVAL    = 2    -- Her 2 frame'de guncelle
+espFrameTickMain = 0
+espWallCheckTick = 0
+espVisCache = {}
+
 function updateESP()
     if not _G.ESP then clearAllESP(); return end
-    myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local myChar = LocalPlayer.Character
+    local myHRP  = myChar and myChar:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
 
-    colorEnemy  = Color3.fromRGB(_G.ESPEnemyR,  _G.ESPEnemyG,  _G.ESPEnemyB)
-    colorFriend = Color3.fromRGB(_G.ESPFriendR, _G.ESPFriendG, _G.ESPFriendB)
-    colorVis    = Color3.fromRGB(_G.ESPVisR,    _G.ESPVisG,    _G.ESPVisB)
-    colorName   = Color3.fromRGB(_G.ESPNameR,   _G.ESPNameG,   _G.ESPNameB)
+    -- Renkleri her frame hesaplama - cache kullan
+    local cEnemy  = Color3.fromRGB(_G.ESPEnemyR,  _G.ESPEnemyG,  _G.ESPEnemyB)
+    local cFriend = Color3.fromRGB(_G.ESPFriendR, _G.ESPFriendG, _G.ESPFriendB)
+    local cVis    = Color3.fromRGB(_G.ESPVisR,    _G.ESPVisG,    _G.ESPVisB)
+    local cName   = Color3.fromRGB(_G.ESPNameR,   _G.ESPNameG,   _G.ESPNameB)
+    local cDist   = Color3.fromRGB(_G.ESPDistColorR, _G.ESPDistColorG, _G.ESPDistColorB)
+    local cID     = Color3.fromRGB(_G.ESPIDColorR, _G.ESPIDColorG, _G.ESPIDColorB)
+
+    -- Wallcheck sadece her N frame'de
+    espWallCheckTick = espWallCheckTick + 1
+    local doWallCheck = (espWallCheckTick % ESP_WALLCHECK_INTERVAL == 0)
 
     -- Ayrilan oyunculari temizle
-    activePlayers = {}
-    for _, p in ipairs(Players:GetPlayers()) do activePlayers[p] = true end
-    for p in pairs(espCache) do if not activePlayers[p] then clearESPPlayer(p) end end
+    local active = {}
+    for _, p in ipairs(Players:GetPlayers()) do active[p] = true end
+    for p in pairs(espCache) do
+        if not active[p] then clearESPPlayer(p) end
+    end
 
+    -- Her oyuncu icin guncelle
     for player, cache in pairs(espCache) do
         if not (player and player.Parent and cache.hrp and cache.hrp.Parent) then
-            clearESPPlayer(player); do end
-        end
-        char = player.Character
-        hum = char and char:FindFirstChildOfClass("Humanoid")
-        hrp = cache.hrp
-        dist = (hrp.Position - myHRP.Position).Magnitude
-        friendly = player.Team and LocalPlayer.Team and player.Team == LocalPlayer.Team
-        show = (friendly and _G.ShowFriendly) or (not friendly and _G.TeamCheck)
-        if not (show and hum and hum.Health > 0) then show = false end
-
-        visible = false
-        if _G.WallCheck and show and not friendly then visible = isPlayerVisible(player) end
-        col = friendly and colorFriend or (_G.WallCheck and (visible and colorVis or colorEnemy) or colorEnemy)
-
-        -- 3D Highlight
-        if cache.highlight then
-            cache.highlight.Enabled = _G.ESPBox3D and show
-            if cache.highlight.Enabled then
-                cache.highlight.FillColor = col; cache.highlight.OutlineColor = col
-                cache.highlight.DepthMode = (_G.WallCheck and visible) and
-                    Enum.HighlightDepthMode.Occluded or Enum.HighlightDepthMode.AlwaysOnTop
-            end
-        end
-
-        -- Billboard labels
-        if cache.billboard then
-            cache.billboard.Enabled = show
-            if show then
-                cache.idLabel.Visible  = _G.ShowID;       cache.idLabel.Text  = "ID:" .. player.UserId
-                cache.nameLabel.Visible = _G.ShowNames;   cache.nameLabel.Text = player.Name; cache.nameLabel.TextColor3 = colorName
-                cache.distLabel.Visible = _G.ShowDistance; cache.distLabel.Text = math.floor(dist) .. "m"
-            end
-        end
-
-        -- Health bar
-        if cache.healthBillboard then
-            cache.healthBillboard.Enabled = _G.ShowHealthBar and show
-            if cache.healthBillboard.Enabled and hum and hum.Health > 0 then
-                pct = hum.Health / hum.MaxHealth
-                cache.hbFill.Size = UDim2.new(1, 0, pct, 0)
-                cache.hbFill.Position = UDim2.new(0, 0, 1 - pct, 0)
-                cache.hbFill.BackgroundColor3 = pct > 0.6 and Color3.fromRGB(80, 255, 120) or
-                    (pct > 0.3 and Color3.fromRGB(255, 220, 80) or Color3.fromRGB(255, 80, 80))
-            end
-        end
-
-        -- 2D Box
-        e = esp2DDrawings[player]
-        if e then
-            if _G.ESPBox2D and show then
-                sp, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-                if onScreen then
-                    head = char:FindFirstChild("Head")
-                    if head then
-                        sh = Camera:WorldToViewportPoint(head.Position)
-                        boxH = math.abs(sh.Y - sp.Y) * 2.3
-                        boxW = boxH * 0.55
-                        topLeft = Vector2.new(sp.X - boxW/2, sh.Y - boxH/2)
-                        nameColor = Color3.fromRGB(_G.ESPNameR, _G.ESPNameG, _G.ESPNameB)
-                        distColor = Color3.fromRGB(_G.ESPDistColorR, _G.ESPDistColorG, _G.ESPDistColorB)
-                        idColor = Color3.fromRGB(_G.ESPIDColorR, _G.ESPIDColorG, _G.ESPIDColorB)
-                        if dist > _G.ESPMaxDist then
-                            -- Too far, hide all
-                            e.box.Visible = false; e.name.Visible = false
-                            e.dist.Visible = false; e.idtxt.Visible = false
-                            e.hbg.Visible = false; e.hbf.Visible = false
-                        else
-                            -- Box style
-                            if _G.ESPCornerMode then
-                                e.box.Visible = false
-                                cl = _G.ESPCornerLen
-                                if not e.c1 then
-                                    for i = 1, 8 do
-                                        l = Drawing.new("Line")
-                                        l.Thickness = 1.5; l.Visible = false; l.Color = col
-                                        e["c"..i] = l
-                                    end
-                                end
-                                tl = topLeft
-                                tr = Vector2.new(topLeft.X+boxW, topLeft.Y)
-                                bl = Vector2.new(topLeft.X, topLeft.Y+boxH)
-                                br = Vector2.new(topLeft.X+boxW, topLeft.Y+boxH)
-                                e.c1.From=tl; e.c1.To=tl+Vector2.new(cl,0); e.c1.Visible=true; e.c1.Color=col; e.c1.Thickness=_G.ESPCornerThick
-                                e.c2.From=tl; e.c2.To=tl+Vector2.new(0,cl); e.c2.Visible=true; e.c2.Color=col
-                                e.c3.From=tr; e.c3.To=tr-Vector2.new(cl,0); e.c3.Visible=true; e.c3.Color=col
-                                e.c4.From=tr; e.c4.To=tr+Vector2.new(0,cl); e.c4.Visible=true; e.c4.Color=col
-                                e.c5.From=bl; e.c5.To=bl+Vector2.new(cl,0); e.c5.Visible=true; e.c5.Color=col
-                                e.c6.From=bl; e.c6.To=bl-Vector2.new(0,cl); e.c6.Visible=true; e.c6.Color=col
-                                e.c7.From=br; e.c7.To=br-Vector2.new(cl,0); e.c7.Visible=true; e.c7.Color=col
-                                e.c8.From=br; e.c8.To=br-Vector2.new(0,cl); e.c8.Visible=true; e.c8.Color=col
-                            else
-                                e.box.Visible = true
-                                e.box.Position = topLeft; e.box.Size = Vector2.new(boxW, boxH); e.box.Color = col
-                                for ci = 1, 8 do if e["c"..ci] then e["c"..ci].Visible = false end end
-                            end
-                            -- Labels
-                            if _G.ShowNames then e.name.Visible=true; e.name.Position=Vector2.new(sp.X,sh.Y-boxH/2-18); e.name.Text=player.Name; e.name.Color=nameColor else e.name.Visible=false end
-                            if _G.ShowDistance then e.dist.Visible=true; e.dist.Position=Vector2.new(sp.X,sh.Y+boxH/2+4); e.dist.Text=math.floor(dist).."m"; e.dist.Color=distColor else e.dist.Visible=false end
-                            if _G.ShowID then e.idtxt.Visible=true; e.idtxt.Position=Vector2.new(sp.X,sh.Y-boxH/2-32); e.idtxt.Text="ID:"..player.UserId; e.idtxt.Color=idColor else e.idtxt.Visible=false end
-                            -- Health bar
-                            if _G.ShowHealthBar and hum and hum.Health > 0 then
-                                pct = hum.Health / hum.MaxHealth
-                                e.hbg.Visible=true; e.hbg.Position=Vector2.new(topLeft.X-7,topLeft.Y); e.hbg.Size=Vector2.new(3,boxH)
-                                e.hbf.Visible=true; e.hbf.Position=Vector2.new(topLeft.X-7,topLeft.Y+boxH*(1-pct)); e.hbf.Size=Vector2.new(3,boxH*pct)
-                                e.hbf.Color=pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80))
-                            else
-                                e.hbg.Visible=false; e.hbf.Visible=false
-                            end
-                        end
-                    else
-                        -- No head
-                        e.box.Visible=false; e.name.Visible=false; e.dist.Visible=false
-                        e.idtxt.Visible=false; e.hbg.Visible=false; e.hbf.Visible=false
-                    end
-                else
-                    -- Not on screen
-                    e.box.Visible=false; e.name.Visible=false; e.dist.Visible=false
-                    e.idtxt.Visible=false; e.hbg.Visible=false; e.hbf.Visible=false
+            clearESPPlayer(player)
+        else
+            local char = player.Character
+            local hum  = char and char:FindFirstChildOfClass("Humanoid")
+            if not hum then
+                -- Highlight kapat
+                if cache.highlight then cache.highlight.Enabled = false end
+                if cache.billboard then cache.billboard.Enabled = false end
+                if cache.healthBillboard then cache.healthBillboard.Enabled = false end
+                local e2 = esp2DDrawings[player]
+                if e2 then
+                    for k, v in pairs(e2) do pcall(function() v.Visible = false end) end
                 end
             else
-                -- Not E2D
-                e.box.Visible=false; e.name.Visible=false; e.dist.Visible=false
-                e.idtxt.Visible=false; e.hbg.Visible=false; e.hbf.Visible=false
-            end
-        end
+                local hrp  = cache.hrp
+                local dist = (hrp.Position - myHRP.Position).Magnitude
+                local friendly = (player.Team ~= nil and LocalPlayer.Team ~= nil and player.Team == LocalPlayer.Team)
+                local show = hum.Health > 0 and dist <= _G.ESPMaxDist
+                if friendly and not _G.ShowFriendly then show = false end
+                if not friendly and not _G.TeamCheck then show = false end
 
-        -- Tracer
-        tracer = espTracerDrawings[player]
-        if tracer then
-            tracer.Thickness = _G.TracerThick
-            if _G.ShowTracer and show then
-                sp, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-                if onScreen then
-                    tracer.Visible = true
-                    tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                    tracer.To = Vector2.new(sp.X, sp.Y)
-                    tracer.Color = col
-                else tracer.Visible = false end
-            else tracer.Visible = false end
+                -- Wallcheck cache
+                if doWallCheck and _G.WallCheck and show and not friendly then
+                    espVisCache[player] = isPlayerVisible(player)
+                elseif not _G.WallCheck then
+                    espVisCache[player] = false
+                end
+                local visible = espVisCache[player] or false
+                local col = friendly and cFriend or (_G.WallCheck and visible and cVis or cEnemy)
+
+                -- 3D Highlight
+                if cache.highlight then
+                    cache.highlight.Enabled = _G.ESPBox3D and show
+                    if _G.ESPBox3D and show then
+                        cache.highlight.FillColor   = col
+                        cache.highlight.OutlineColor = col
+                    end
+                end
+
+                -- Billboard (isim/mesafe/id) - sadece gerekli oldugunda
+                local needBB = show and (_G.ShowNames or _G.ShowDistance or _G.ShowID)
+                if cache.billboard then
+                    cache.billboard.Enabled = needBB
+                    if needBB then
+                        if cache.idLabel   then cache.idLabel.Visible   = _G.ShowID;       cache.idLabel.Text   = "ID:" .. player.UserId end
+                        if cache.nameLabel then cache.nameLabel.Visible = _G.ShowNames;    cache.nameLabel.Text = player.Name; cache.nameLabel.TextColor3 = cName end
+                        if cache.distLabel then cache.distLabel.Visible = _G.ShowDistance; cache.distLabel.Text = math.floor(dist) .. "m" end
+                    end
+                end
+
+                -- Health bar
+                if cache.healthBillboard then
+                    cache.healthBillboard.Enabled = _G.ShowHealthBar and show
+                    if _G.ShowHealthBar and show then
+                        local pct = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+                        if cache.hbFill then
+                            cache.hbFill.Size     = UDim2.new(1, 0, pct, 0)
+                            cache.hbFill.Position = UDim2.new(0, 0, 1 - pct, 0)
+                            cache.hbFill.BackgroundColor3 = pct > 0.6 and Color3.fromRGB(80,255,120) or
+                                (pct > 0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80))
+                        end
+                    end
+                end
+
+                -- 2D Box + labels
+                local e = esp2DDrawings[player]
+                if e then
+                    if _G.ESPBox2D and show then
+                        local sp, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                        if onScreen then
+                            local head = char:FindFirstChild("Head")
+                            if head then
+                                local sh   = Camera:WorldToViewportPoint(head.Position)
+                                local boxH = math.abs(sh.Y - sp.Y) * 2.3
+                                local boxW = boxH * 0.55
+                                local topLeft = Vector2.new(sp.X - boxW / 2, sh.Y - boxH / 2)
+
+                                -- Box stili
+                                if _G.ESPCornerMode then
+                                    e.box.Visible = false
+                                    local cl = _G.ESPCornerLen or 8
+                                    local ct = _G.ESPCornerThick or 1.5
+                                    local tl = topLeft
+                                    local tr = Vector2.new(topLeft.X + boxW, topLeft.Y)
+                                    local bl = Vector2.new(topLeft.X,        topLeft.Y + boxH)
+                                    local br = Vector2.new(topLeft.X + boxW, topLeft.Y + boxH)
+                                    e.c1.From=tl; e.c1.To=tl+Vector2.new(cl,0); e.c1.Visible=true; e.c1.Color=col; e.c1.Thickness=ct
+                                    e.c2.From=tl; e.c2.To=tl+Vector2.new(0,cl); e.c2.Visible=true; e.c2.Color=col; e.c2.Thickness=ct
+                                    e.c3.From=tr; e.c3.To=tr-Vector2.new(cl,0); e.c3.Visible=true; e.c3.Color=col; e.c3.Thickness=ct
+                                    e.c4.From=tr; e.c4.To=tr+Vector2.new(0,cl); e.c4.Visible=true; e.c4.Color=col; e.c4.Thickness=ct
+                                    e.c5.From=bl; e.c5.To=bl+Vector2.new(cl,0); e.c5.Visible=true; e.c5.Color=col; e.c5.Thickness=ct
+                                    e.c6.From=bl; e.c6.To=bl-Vector2.new(0,cl); e.c6.Visible=true; e.c6.Color=col; e.c6.Thickness=ct
+                                    e.c7.From=br; e.c7.To=br-Vector2.new(cl,0); e.c7.Visible=true; e.c7.Color=col; e.c7.Thickness=ct
+                                    e.c8.From=br; e.c8.To=br-Vector2.new(0,cl); e.c8.Visible=true; e.c8.Color=col; e.c8.Thickness=ct
+                                else
+                                    for ci = 1, 8 do if e["c"..ci] then e["c"..ci].Visible = false end end
+                                    e.box.Visible   = true
+                                    e.box.Position  = topLeft
+                                    e.box.Size      = Vector2.new(boxW, boxH)
+                                    e.box.Color     = col
+                                    e.box.Thickness = 1.5
+                                end
+
+                                -- Metin etiketler
+                                if e.name then
+                                    e.name.Visible = _G.ShowNames
+                                    if _G.ShowNames then e.name.Position = Vector2.new(sp.X, sh.Y-boxH/2-18); e.name.Text = player.Name; e.name.Color = cName end
+                                end
+                                if e.dist then
+                                    e.dist.Visible = _G.ShowDistance
+                                    if _G.ShowDistance then e.dist.Position = Vector2.new(sp.X, sh.Y+boxH/2+4); e.dist.Text = math.floor(dist).."m"; e.dist.Color = cDist end
+                                end
+                                if e.idtxt then
+                                    e.idtxt.Visible = _G.ShowID
+                                    if _G.ShowID then e.idtxt.Position = Vector2.new(sp.X, sh.Y-boxH/2-32); e.idtxt.Text = "ID:"..player.UserId; e.idtxt.Color = cID end
+                                end
+
+                                -- HP bar
+                                if e.hbg and e.hbf then
+                                    if _G.ShowHealthBar and hum.Health > 0 then
+                                        local pct = math.clamp(hum.Health / math.max(hum.MaxHealth,1), 0, 1)
+                                        e.hbg.Visible   = true
+                                        e.hbg.Position  = Vector2.new(topLeft.X - 7, topLeft.Y)
+                                        e.hbg.Size      = Vector2.new(4, boxH)
+                                        e.hbf.Visible   = true
+                                        e.hbf.Position  = Vector2.new(topLeft.X - 7, topLeft.Y + boxH*(1-pct))
+                                        e.hbf.Size      = Vector2.new(4, boxH * pct)
+                                        e.hbf.Color     = pct>0.6 and Color3.fromRGB(80,255,120) or (pct>0.3 and Color3.fromRGB(255,220,80) or Color3.fromRGB(255,80,80))
+                                    else
+                                        e.hbg.Visible = false; e.hbf.Visible = false
+                                    end
+                                end
+                            else
+                                -- Kafa yok - hepsini gizle
+                                for _, v in pairs(e) do pcall(function() v.Visible = false end) end
+                            end
+                        else
+                            -- Ekranda degil
+                            for _, v in pairs(e) do pcall(function() v.Visible = false end) end
+                        end
+                    else
+                        -- ESPBox2D kapali veya gosterme
+                        for _, v in pairs(e) do pcall(function() v.Visible = false end) end
+                    end
+                end
+
+                -- Tracer
+                local tracer = espTracerDrawings[player]
+                if tracer then
+                    tracer.Thickness = _G.TracerThick or 1.5
+                    if _G.ShowTracer and show then
+                        local sp2, onS2 = Camera:WorldToViewportPoint(hrp.Position)
+                        if onS2 then
+                            tracer.Visible = true
+                            tracer.From    = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                            tracer.To      = Vector2.new(sp2.X, sp2.Y)
+                            tracer.Color   = col
+                        else tracer.Visible = false end
+                    else tracer.Visible = false end
+                end
+            end
         end
     end
 end
+
 
 -- ESP oyuncu baglama
 function bindESPToPlayer(player)
@@ -4198,20 +4091,17 @@ createMenu = function()
     verTxt.TextColor3 = Tc.TextFaint; verTxt.Font = Enum.Font.GothamMedium; verTxt.TextSize = 11; verTxt.TextXAlignment = Enum.TextXAlignment.Left
     keyBadge = Instance.new("Frame", titleBar)
     keyBadge.Size = UDim2.new(0,80,0,22); keyBadge.Position = UDim2.new(0,168,0.5,-11)
-    keyBadge.BackgroundColor3 = keyType=="lifetime" and Tc.KeyGold or
-        (keyType=="monthly" and Color3.fromRGB(180,120,255) or
-        (keyType=="weekly"  and Color3.fromRGB(80,180,255)  or Tc.AccentFaint)); makeCorner(5, keyBadge)
+    keyBadge.BackgroundColor3 = Tc.KeyGold  -- key sistemi kaldirildi; makeCorner(5, keyBadge)
     keyBadgeLbl = Instance.new("TextLabel", keyBadge)
     keyBadgeLbl.Size = UDim2.new(1,0,1,0); keyBadgeLbl.BackgroundTransparency = 1
     keyBadgeLbl.TextColor3 = Color3.new(1,1,1); keyBadgeLbl.Font = Enum.Font.GothamBold; keyBadgeLbl.TextSize = 11
     keyNames = {daily=T("type_d"),weekly=T("type_w"),monthly=T("type_m"),lifetime=T("type_l")}
-    keyBadgeLbl.Text = keyNames[keyType] or keyType:upper()
+    keyBadgeLbl.Text = "SINIRSIZ"
     timeLbl = Instance.new("TextLabel", titleBar)
     timeLbl.Size = UDim2.new(0,110,1,0); timeLbl.Position = UDim2.new(0,256,0,0)
     timeLbl.BackgroundTransparency = 1; timeLbl.TextColor3 = Tc.TextFaint
     timeLbl.Font = Enum.Font.GothamMedium; timeLbl.TextSize = 10; timeLbl.TextXAlignment = Enum.TextXAlignment.Left
-    timeLbl.Text = formatTimeLeft(keyExpires)
-    task.spawn(function() while MainGui and MainGui.Parent do timeLbl.Text = formatTimeLeft(keyExpires); task.wait(60) end end)
+    timeLbl.Text = ""
     discLbl = Instance.new("TextLabel", titleBar)
     discLbl.Size = UDim2.new(0,160,1,0); discLbl.Position = UDim2.new(0.5,-80,0,0)
     discLbl.BackgroundTransparency = 1; discLbl.Text = ".gg/tCufFEMdux"
@@ -4374,165 +4264,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end, true) -- true = gameProcessed olsa bile yakala
 
--- KEY MENU
-keyMenuGui = makeScreenGui("SusanoKeyMenu", 999)
-
-function buildKeyMenu(onSuccess)
-    local overlay = Instance.new("Frame", keyMenuGui)
-    overlay.Size = UDim2.new(1,0,1,0); overlay.BackgroundColor3 = Color3.fromRGB(5,5,5)
-    overlay.BackgroundTransparency = 0; overlay.BorderSizePixel = 0
-
-    local card = Instance.new("Frame", keyMenuGui)
-    card.Size = UDim2.new(0,460,0,460); card.Position = UDim2.new(0.5,-230,0.5,-230)
-    card.BackgroundColor3 = Tc.BG; card.BorderSizePixel = 0; makeCorner(12, card)
-    Instance.new("UIStroke", card).Color = Tc.BorderLight
-
-    local topBar = Instance.new("Frame", card)
-    topBar.Size = UDim2.new(1,0,0,52); topBar.BackgroundColor3 = Tc.TitleBar
-    topBar.BorderSizePixel = 0; topBar.ClipsDescendants = true; makeCorner(12, topBar)
-    local tbFix2 = Instance.new("Frame", topBar)
-    tbFix2.Size = UDim2.new(1,0,0.5,0); tbFix2.Position = UDim2.new(0,0,0.5,0); tbFix2.BackgroundColor3 = Tc.TitleBar; tbFix2.BorderSizePixel = 0
-    local titleLbl = Instance.new("TextLabel", topBar)
-    titleLbl.Size = UDim2.new(1,0,0.6,0); titleLbl.BackgroundTransparency = 1; titleLbl.Text = "SUSANO"
-    titleLbl.TextColor3 = Tc.Accent; titleLbl.Font = Enum.Font.GothamBlack; titleLbl.TextSize = 24
-    local subtitleLbl = Instance.new("TextLabel", topBar)
-    subtitleLbl.Size = UDim2.new(1,0,0.4,0); subtitleLbl.Position = UDim2.new(0,0,0.6,0); subtitleLbl.BackgroundTransparency = 1
-    subtitleLbl.Text = "v2.2  |  .gg/tCufFEMdux"; subtitleLbl.TextColor3 = Tc.TextFaint
-    subtitleLbl.Font = Enum.Font.GothamMedium; subtitleLbl.TextSize = 11
-
-    -- Profil
-    local profBg = Instance.new("Frame", card)
-    profBg.Size = UDim2.new(1,-32,0,68); profBg.Position = UDim2.new(0,16,0,60); profBg.BackgroundColor3 = Tc.Card; makeCorner(10, profBg)
-    local avFrame = Instance.new("Frame", profBg)
-    avFrame.Size = UDim2.new(0,46,0,46); avFrame.Position = UDim2.new(0,10,0.5,-23); avFrame.BackgroundColor3 = Tc.AccentFaint; makeCorner(23, avFrame)
-    pcall(function()
-        local img = Instance.new("ImageLabel", avFrame)
-        img.Size = UDim2.new(1,0,1,0); img.BackgroundTransparency = 1; makeCorner(23, img)
-        img.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-    end)
-    local infoFrame = Instance.new("Frame", profBg)
-    infoFrame.Size = UDim2.new(1,-66,1,0); infoFrame.Position = UDim2.new(0,62,0,0); infoFrame.BackgroundTransparency = 1
-    local function addInfoLine(posY, text, color, fontSize)
-        local lbl = Instance.new("TextLabel", infoFrame)
-        lbl.Size = UDim2.new(1,0,0,17); lbl.Position = UDim2.new(0,0,0,posY); lbl.BackgroundTransparency = 1
-        lbl.Text = text; lbl.TextColor3 = color; lbl.Font = Enum.Font.GothamMedium; lbl.TextSize = fontSize; lbl.TextXAlignment = Enum.TextXAlignment.Left
-    end
-    addInfoLine(6,  "@" .. USERNAME, Tc.Text, 14)
-    addInfoLine(24, "HWID: " .. HWID:sub(1,24) .. "...", Tc.TextFaint, 10)
-    addInfoLine(40, "UID: " .. USER_ID, Tc.TextFaint, 10)
-
-    local inputLbl = Instance.new("TextLabel", card)
-    inputLbl.Size = UDim2.new(1,-32,0,16); inputLbl.Position = UDim2.new(0,16,0,140)
-    inputLbl.BackgroundTransparency = 1; inputLbl.Text = "ANAHTAR"; inputLbl.TextColor3 = Tc.TextFaint
-    inputLbl.Font = Enum.Font.GothamBold; inputLbl.TextSize = 10; inputLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local inputBox = Instance.new("TextBox", card)
-    inputBox.Size = UDim2.new(1,-32,0,44); inputBox.Position = UDim2.new(0,16,0,158)
-    inputBox.BackgroundColor3 = Tc.Card; inputBox.TextColor3 = Tc.Text; inputBox.Font = Enum.Font.GothamMedium; inputBox.TextSize = 15
-    inputBox.PlaceholderText = "SNLIFE-XXXX-XXXX-XXXX"; inputBox.PlaceholderColor3 = Tc.TextFaint
-    inputBox.Text = ""; inputBox.ClearTextOnFocus = false; inputBox.BorderSizePixel = 0; makeCorner(8, inputBox)
-    local inputStroke = Instance.new("UIStroke", inputBox); inputStroke.Color = Tc.BorderLight; inputStroke.Thickness = 1
-
-    local statusLbl = Instance.new("TextLabel", card)
-    statusLbl.Size = UDim2.new(1,-32,0,20); statusLbl.Position = UDim2.new(0,16,0,208)
-    statusLbl.BackgroundTransparency = 1; statusLbl.Text = ""; statusLbl.Font = Enum.Font.GothamMedium; statusLbl.TextSize = 13; statusLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Hatirla toggle (varsayilan KAPALI - her giriste key sor)
-    local remRow = Instance.new("Frame", card)
-    remRow.Size = UDim2.new(1,-32,0,28); remRow.Position = UDim2.new(0,16,0,234); remRow.BackgroundTransparency = 1
-    local remLbl = Instance.new("TextLabel", remRow)
-    remLbl.Size = UDim2.new(0.78,0,1,0); remLbl.BackgroundTransparency = 1; remLbl.Text = T("key_rem")
-    remLbl.TextColor3 = Tc.TextDim; remLbl.Font = Enum.Font.GothamMedium; remLbl.TextSize = 13; remLbl.TextXAlignment = Enum.TextXAlignment.Left
-    -- Kayitli key var mi kontrol et
-    local savedKeyVal = ""
-    pcall(function()
-        local ok, content = safeRead(KEY_FILE)
-        if ok and content and content ~= "" then savedKeyVal = content:gsub("%s+","") end
-    end)
-    -- Kayitli key varsa direkt dogrula
-    if savedKeyVal ~= "" then
-        statusLbl.Text = "Kayitli key dogrulaniyor..."
-        task.spawn(function()
-            validateKey(savedKeyVal, function(ok2, result, expires)
-                if ok2 then
-                    keyValidated = true; keyType = result; keyExpires = expires
-                    activeKey = savedKeyVal; _G.Verified = true
-                    pcall(function() keyMenuGui:Destroy() end)
-                    createFOVCircle()
-                    createWatermark()
-                    task.spawn(function() task.wait(0.05); createMenu() end)
-                    onSuccess(result)
-                else
-                    -- Gecersiz - key girisi goster
-                    statusLbl.Text = "Kayitli key gecersiz, yeniden gir"
-                    statusLbl.TextColor3 = Tc.KeyRed
-                    safeDel(KEY_FILE)
-                end
-            end)
-        end)
-    end
-    local remOn = true
-    local pH, pW = 24, 50
-    local remPill = Instance.new("Frame", remRow)
-    remPill.Size = UDim2.new(0,pW,0,pH); remPill.Position = UDim2.new(1,-pW,0.5,-pH/2)
-    remPill.BackgroundColor3 = remOn and Tc.OnBG or Tc.OffBG; makeCorner(pH, remPill)
-    local remKnob = Instance.new("Frame", remPill)
-    remKnob.Size = UDim2.new(0,pH-6,0,pH-6); remKnob.Position = UDim2.new(remOn and 1 or 0, remOn and -(pH-3) or 3, 0.5, -(pH-6)/2)
-    remKnob.BackgroundColor3 = remOn and Tc.TitleBar or Tc.AccentDim; makeCorner(100, remKnob)
-    local remHit = Instance.new("TextButton", remRow); remHit.Size = UDim2.new(1,0,1,0); remHit.BackgroundTransparency = 1; remHit.Text = ""
-    remHit.MouseButton1Click:Connect(function()
-        remOn = not remOn
-        makeTween(remPill, 0.18, {BackgroundColor3 = remOn and Tc.OnBG or Tc.OffBG})
-        makeTween(remKnob, 0.18, {Position = UDim2.new(remOn and 1 or 0, remOn and -(pH-3) or 3, 0.5, -(pH-6)/2)})
-    end)
-
-    local activateBtn = Instance.new("TextButton", card)
-    activateBtn.Size = UDim2.new(1,-32,0,44); activateBtn.Position = UDim2.new(0,16,0,270)
-    activateBtn.BackgroundColor3 = Tc.Accent; activateBtn.TextColor3 = Tc.BG
-    activateBtn.Font = Enum.Font.GothamBold; activateBtn.TextSize = 16; activateBtn.Text = T("key_btn"); makeCorner(8, activateBtn)
-    activateBtn.MouseEnter:Connect(function() makeTween(activateBtn,0.1,{BackgroundColor3=Tc.Accent:Lerp(Color3.new(1,1,1),0.15)}) end)
-    activateBtn.MouseLeave:Connect(function() makeTween(activateBtn,0.1,{BackgroundColor3=Tc.Accent}) end)
-
-    local footLbl = Instance.new("TextLabel", card)
-    footLbl.Size = UDim2.new(1,-32,0,18); footLbl.Position = UDim2.new(0,16,0,322)
-    footLbl.BackgroundTransparency = 1; footLbl.Text = T("disc")
-    footLbl.TextColor3 = Tc.Accent; footLbl.Font = Enum.Font.GothamBold; footLbl.TextSize = 13
-
-    local attempts = 0; local busy = false
-    local function tryActivate()
-        if busy then return end
-        local key = inputBox.Text:upper():gsub("%s+","")
-        if key == "" then statusLbl.Text = T("key_enter"); statusLbl.TextColor3 = Tc.KeyRed; return end
-        busy = true; statusLbl.Text = "Dogrulaniyor..."; statusLbl.TextColor3 = Tc.TextDim
-        activateBtn.Text = T("key_chk"); activateBtn.BackgroundColor3 = Tc.AccentFaint
-        validateKey(key, function(ok, result, expires)
-            busy = false; activateBtn.Text = T("key_btn"); activateBtn.BackgroundColor3 = Tc.Accent
-            if ok then
-                if remOn then safeWrite(KEY_FILE, key) end
-                activeKey = key; keyExpires = expires
-                statusLbl.Text = T("key_ok"); statusLbl.TextColor3 = Tc.KeyGreen
-                makeTween(activateBtn,0.2,{BackgroundColor3=Tc.KeyGreen})
-                makeTween(inputStroke,0.2,{Color=Tc.KeyGreen})
-                task.wait(0.8)
-                makeTween(card,0.25,{BackgroundTransparency=1}); makeTween(overlay,0.25,{BackgroundTransparency=1})
-                task.wait(0.3)
-                keyMenuGui:Destroy(); keyValidated = true; keyType = result; _G.Verified = true
-                onSuccess(result)
-            else
-                attempts = attempts + 1
-                statusLbl.Text = tostring(result) .. " (" .. attempts .. ")"; statusLbl.TextColor3 = Tc.KeyRed
-                makeTween(inputStroke,0.1,{Color=Tc.KeyRed}); task.wait(0.25); makeTween(inputStroke,0.3,{Color=Tc.BorderLight})
-                if attempts >= 5 then statusLbl.Text = T("key_many"); task.wait(1.5); keyMenuGui:Destroy() end
-            end
-        end)
-    end
-    activateBtn.MouseButton1Click:Connect(tryActivate)
-    inputBox.FocusLost:Connect(function(enter) if enter then tryActivate() end end)
-    task.spawn(function() task.wait(0.1); pcall(function() inputBox:CaptureFocus() end) end)
-
-    card.BackgroundTransparency = 1; card.Position = UDim2.new(0.5,-230,0.5,-220)
-    makeTween(card, 0.18, {BackgroundTransparency=0, Position=UDim2.new(0.5,-230,0.5,-230)})
-end
+-- Key sistemi kaldirildi
 
 -- RESPAWN - ozellikleri yeniden etkinlestir
 LocalPlayer.CharacterAdded:Connect(function()
@@ -4557,7 +4289,6 @@ end)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.F5 then
-        if not keyValidated then return end
         if not menuBuilt then
             createMenu()
         else
@@ -4572,7 +4303,6 @@ end)
 
 -- MAIN LOOP
 RunService.RenderStepped:Connect(function()
-    if not _G.Verified then return end
     -- Rainbow hue
     if THEMES[currentThemeIndex] then
         local th = THEMES[currentThemeIndex]
@@ -4589,8 +4319,8 @@ RunService.RenderStepped:Connect(function()
     end
     -- ESP
     -- ESP throttle: her 3 frame'de bir guncelle (performans)
-    espFrameCount = (espFrameCount or 0) + 1
-    if _G.ESP and espFrameCount % 2 == 0 then
+    espFrameTickMain = (espFrameTickMain or 0) + 1
+    if _G.ESP and espFrameTickMain % 2 == 0 then
         pcall(updateESP)
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and not espCache[p] and p.Character then
@@ -4675,3 +4405,9 @@ enableTeleportCursor()
 setupAutoRejoin()
 setupAntiScreenshot()
 setupPanicKey()
+
+-- Direkt baslat (key sistemi yok)
+createFOVCircle()
+createWatermark()
+task.spawn(function() task.wait(0.05); createMenu() end)
+task.spawn(function() task.wait(0.3); openESPBuilder() end)
